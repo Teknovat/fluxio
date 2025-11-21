@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User model with Role enum (using String for SQLite compatibility)
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String // bcrypt hashed
+  role      String   @default("USER") // ADMIN or USER
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Intervenant model with IntervenantType enum (using String for SQLite compatibility)
+model Intervenant {
+  id         String      @id @default(cuid())
+  name       String
+  type       String // CLIENT, FOURNISSEUR, ASSOCIE, CAISSE_BANQUE, AUTRE
+  active     Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  mouvements Mouvement[]
+}
+
+// Mouvement model with MouvementType and Modality enums (using String for SQLite compatibility)
+model Mouvement {
+  id            String      @id @default(cuid())
+  date          DateTime
+  intervenantId String
+  intervenant   Intervenant @relation(fields: [intervenantId], references: [id], onDelete: Restrict)
+  type          String // ENTREE or SORTIE
+  amount        Float
+  reference     String?
+  modality      String? // ESPECES, CHEQUE, VIREMENT, AUTRE
+  note          String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([date])
+  @@index([intervenantId])
+  @@index([type])
+}
