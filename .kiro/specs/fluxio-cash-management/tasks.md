@@ -270,33 +270,33 @@
   - Display success toast
   - _Requirements: 8.1, 8.2, 8.3, 8.4_
 
-- [ ] 19. Build intervenants management page (Admin only)
+- [x] 19. Build intervenants management page (Admin only)
 
-  - [ ] 19.1 Create app/(dashboard)/intervenants/page.tsx
+  - [x] 19.1 Create app/(dashboard)/intervenants/page.tsx
     - Fetch intervenants from GET /api/intervenants
     - Display loading state
     - _Requirements: 4.1_
-  - [ ] 19.2 Build intervenants table
+  - [x] 19.2 Build intervenants table
     - Display columns: name, type, active status
     - Add type filter dropdown
     - Show edit and activate/deactivate buttons
     - Make table responsive
     - _Requirements: 4.1, 4.6_
-  - [ ] 19.3 Add "Ajouter un intervenant" button
+  - [x] 19.3 Add "Ajouter un intervenant" button
     - Position button above table
     - Open modal/form when clicked
     - _Requirements: 4.2_
 
-- [ ] 20. Create intervenant form component
+- [x] 20. Create intervenant form component
 
-  - [ ] 20.1 Build form UI
+  - [x] 20.1 Build form UI
     - Create modal component
     - Add name text input
     - Add type select (CLIENT, FOURNISSEUR, ASSOCIE, CAISSE_BANQUE, AUTRE)
     - Add active checkbox (for edit mode)
     - Add submit and cancel buttons
     - _Requirements: 4.2, 4.3_
-  - [ ] 20.2 Implement form submission
+  - [x] 20.2 Implement form submission
     - Validate name and type required
     - Submit to POST /api/intervenants for create
     - Submit to PATCH /api/intervenants/[id] for edit
@@ -304,7 +304,7 @@
     - Display error messages
     - _Requirements: 4.2, 4.3_
 
-- [ ] 21. Implement intervenant edit and activation toggle
+- [x] 21. Implement intervenant edit and activation toggle
 
   - Add click handler to edit button
   - Populate form with intervenant data
