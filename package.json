@@ -4,11 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && prisma db push && next build",
     "start": "next start",
     "lint": "next lint",
     "db:push": "prisma db push",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:sqlite": "node scripts/switch-db.js sqlite && prisma generate",
+    "db:postgres": "node scripts/switch-db.js postgres && prisma generate"
   },
   "dependencies": {
     "next": "^14.2.0",

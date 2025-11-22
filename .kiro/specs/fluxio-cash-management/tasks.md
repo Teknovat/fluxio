@@ -163,7 +163,7 @@
     - Return success response
     - _Requirements: 8.1, 8.3_
 
-- [ ] 12. Create Next.js middleware for route protection
+- [x] 12. Create Next.js middleware for route protection
 
   - Create middleware.ts at root level
   - Check for auth-token cookie on all protected routes
@@ -174,7 +174,7 @@
   - Configure matcher to exclude API routes and static files
   - _Requirements: 2.3, 2.4, 10.5_
 
-- [ ] 13. Build login page UI
+- [x] 13. Build login page UI
 
   - Create app/(auth)/login/page.tsx
   - Build login form with email and password fields
@@ -185,7 +185,7 @@
   - Store user data in client state or context
   - _Requirements: 1.1, 1.2, 1.3_
 
-- [ ] 14. Create dashboard layout with navigation
+- [x] 14. Create dashboard layout with navigation
 
   - Create app/(dashboard)/layout.tsx
   - Build navigation bar with Fluxio logo
@@ -197,40 +197,40 @@
   - Make layout responsive with mobile menu
   - _Requirements: 2.2, 2.3, 10.1, 10.2, 10.4_
 
-- [ ] 15. Build mouvements page with filters and table
+- [x] 15. Build mouvements page with filters and table
 
-  - [ ] 15.1 Create app/(dashboard)/mouvements/page.tsx
+  - [x] 15.1 Create app/(dashboard)/mouvements/page.tsx
     - Fetch mouvements from GET /api/mouvements on page load
     - Fetch intervenants list for filter dropdown
     - Display loading state while fetching
     - _Requirements: 5.1_
-  - [ ] 15.2 Implement filter controls
+  - [x] 15.2 Implement filter controls
     - Add date range inputs (dateFrom, dateTo)
     - Add intervenant dropdown filter (all intervenants)
     - Add type filter dropdown (ALL, ENTREE, SORTIE)
     - Add "Clear filters" button
     - Apply filters on change and refetch mouvements
     - _Requirements: 5.2, 5.3, 5.4_
-  - [ ] 15.3 Display summary cards
+  - [x] 15.3 Display summary cards
     - Show Total Entrée card (green styling)
     - Show Total Sortie card (red styling)
     - Show Solde card (blue if positive, red if negative)
     - Update cards when filters change
     - _Requirements: 5.5, 5.6_
-  - [ ] 15.4 Build mouvements data table
+  - [x] 15.4 Build mouvements data table
     - Display columns: date, intervenant name, type, amount, reference, modality, note
     - Show edit and delete buttons for admin users only
     - Format date and amount appropriately
     - Make table responsive (collapse to cards on mobile)
     - _Requirements: 5.1, 5.7, 7.1, 7.2, 8.1_
-  - [ ] 15.5 Add "Ajouter un mouvement" button
+  - [x] 15.5 Add "Ajouter un mouvement" button
     - Position button prominently above or beside table
     - Open modal/form when clicked
     - _Requirements: 6.1_
 
-- [ ] 16. Create mouvement form component
+- [x] 16. Create mouvement form component
 
-  - [ ] 16.1 Build form UI
+  - [x] 16.1 Build form UI
     - Create modal or slide-over component
     - Add date input (default to today)
     - Add intervenant dropdown (only active intervenants)
@@ -241,7 +241,7 @@
     - Add optional note textarea
     - Add submit and cancel buttons
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.6_
-  - [ ] 16.2 Implement form validation and submission
+  - [x] 16.2 Implement form validation and submission
     - Validate required fields client-side
     - Validate amount > 0
     - Submit to POST /api/mouvements for create
@@ -252,7 +252,7 @@
     - Display error toast on failure
     - _Requirements: 6.5, 6.7, 7.3, 7.4_
 
-- [ ] 17. Implement mouvement edit functionality (Admin only)
+- [x] 17. Implement mouvement edit functionality (Admin only)
 
   - Add click handler to edit button in table row
   - Fetch mouvement data and populate form
@@ -261,7 +261,7 @@
   - Refresh mouvements list after successful edit
   - _Requirements: 7.1, 7.3, 7.4, 7.5_
 
-- [ ] 18. Implement mouvement delete functionality (Admin only)
+- [x] 18. Implement mouvement delete functionality (Admin only)
 
   - Add click handler to delete button in table row
   - Show confirmation dialog with mouvement details
