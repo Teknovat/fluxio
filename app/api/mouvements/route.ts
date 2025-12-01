@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, requireAdmin } from '@/lib/auth';
 import { handleAPIError } from '@/lib/api-errors';
 import { createMouvementSchema } from '@/lib/validations';
 import { ZodError } from 'zod';
@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
         const dateTo = searchParams.get('dateTo');
         const intervenantId = searchParams.get('intervenantId');
         const type = searchParams.get('type');
+        const modality = searchParams.get('modality');
 
         // Build Prisma query with filters
         const where: any = {};
@@ -44,6 +45,11 @@ export async function GET(request: NextRequest) {
         // Type filter
         if (type && (type === 'ENTREE' || type === 'SORTIE')) {
             where.type = type;
+        }
+
+        // Modality filter
+        if (modality && ['ESPECES', 'CHEQUE', 'VIREMENT', 'STOCK', 'SALAIRE', 'AUTRE'].includes(modality)) {
+            where.modality = modality;
         }
 
         // Fetch mouvements with intervenant data
@@ -98,13 +104,13 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/mouvements
- * Create a new mouvement (All authenticated users)
+ * Create a new mouvement (Admin only)
  * Validates input, verifies intervenant exists and is active
  */
 export async function POST(request: NextRequest) {
     try {
-        // Verify authentication
-        await requireAuth(request);
+        // Verify admin authentication
+        await requireAdmin(request);
 
         // Parse and validate request body
         const body = await request.json();

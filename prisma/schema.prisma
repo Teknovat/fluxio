@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgres"
   url      = env("DATABASE_URL")
 }
 
@@ -42,7 +42,7 @@ model Mouvement {
   type          String // ENTREE or SORTIE
   amount        Float
   reference     String?
-  modality      String? // ESPECES, CHEQUE, VIREMENT, AUTRE
+  modality      String? // ESPECES, CHEQUE, VIREMENT, STOCK, SALAIRE, AUTRE
   note          String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt

@@ -47,6 +47,61 @@ async function main() {
     }
 
     console.log(`✓ Created ${sampleIntervenants.length} sample intervenants`);
+
+    // Optional: Add sample mouvements for testing
+    const sampleMouvements = [
+        {
+            date: new Date('2024-01-15'),
+            intervenantId: 'seed-client-abc',
+            type: 'ENTREE',
+            amount: 5000,
+            reference: 'FAC-001',
+            modality: 'VIREMENT',
+            note: 'Paiement facture janvier',
+        },
+        {
+            date: new Date('2024-01-20'),
+            intervenantId: 'seed-fournisseur-xyz',
+            type: 'SORTIE',
+            amount: 2500,
+            reference: 'ACH-001',
+            modality: 'CHEQUE',
+            note: 'Achat matériel',
+        },
+        {
+            date: new Date('2024-01-25'),
+            intervenantId: 'seed-associé-jean-dupont',
+            type: 'SORTIE',
+            amount: 3000,
+            reference: 'SAL-001',
+            modality: 'SALAIRE',
+            note: 'Salaire janvier',
+        },
+        {
+            date: new Date('2024-02-01'),
+            intervenantId: 'seed-caisse-espèces',
+            type: 'ENTREE',
+            amount: 1200,
+            modality: 'ESPECES',
+            note: 'Vente comptant',
+        },
+        {
+            date: new Date('2024-02-05'),
+            intervenantId: 'seed-fournisseur-xyz',
+            type: 'SORTIE',
+            amount: 800,
+            modality: 'STOCK',
+            note: 'Achat stock',
+        },
+    ];
+
+    for (const mouvement of sampleMouvements) {
+        await prisma.mouvement.create({
+            data: mouvement,
+        });
+    }
+
+    console.log(`✓ Created ${sampleMouvements.length} sample mouvements`);
     console.log('\nSeed completed successfully!');
     console.log('\nDefault credentials:');
     console.log('  Email: admin@fluxio.com');

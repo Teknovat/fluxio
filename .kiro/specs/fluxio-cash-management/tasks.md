@@ -313,25 +313,25 @@
   - Refresh intervenants list after update
   - _Requirements: 4.3, 4.4_
 
-- [ ] 22. Build users management page (Admin only)
+- [x] 22. Build users management page (Admin only)
 
-  - [ ] 22.1 Create app/(dashboard)/utilisateurs/page.tsx
+  - [x] 22.1 Create app/(dashboard)/utilisateurs/page.tsx
     - Fetch users from GET /api/users
     - Display loading state
     - _Requirements: 3.1_
-  - [ ] 22.2 Build users table
+  - [x] 22.2 Build users table
     - Display columns: name, email, role, active status
     - Show edit button for each user
     - Make table responsive
     - _Requirements: 3.1_
-  - [ ] 22.3 Add "Ajouter un utilisateur" button
+  - [x] 22.3 Add "Ajouter un utilisateur" button
     - Position button above table
     - Open modal/form when clicked
     - _Requirements: 3.2_
 
-- [ ] 23. Create user form component
+- [x] 23. Create user form component
 
-  - [ ] 23.1 Build form UI
+  - [x] 23.1 Build form UI
     - Create modal component
     - Add name text input
     - Add email input
@@ -340,7 +340,7 @@
     - Add active checkbox (for edit mode)
     - Add submit and cancel buttons
     - _Requirements: 3.2, 3.3_
-  - [ ] 23.2 Implement form validation and submission
+  - [x] 23.2 Implement form validation and submission
     - Validate name, email, password (min 6 chars), role
     - Check email format
     - Submit to POST /api/users for create
@@ -350,7 +350,7 @@
     - Close modal and refresh list on success
     - _Requirements: 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 24. Implement user edit functionality
+- [x] 24. Implement user edit functionality
 
   - Add click handler to edit button
   - Populate form with user data

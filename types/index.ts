@@ -22,6 +22,8 @@ export enum Modality {
     ESPECES = "ESPECES",
     CHEQUE = "CHEQUE",
     VIREMENT = "VIREMENT",
+    STOCK = "STOCK",
+    SALAIRE = "SALAIRE",
     AUTRE = "AUTRE",
 }
 

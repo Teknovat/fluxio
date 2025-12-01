@@ -316,6 +316,8 @@ export default function MouvementForm({
               <option value={Modality.ESPECES}>Espèces</option>
               <option value={Modality.CHEQUE}>Chèque</option>
               <option value={Modality.VIREMENT}>Virement</option>
+              <option value={Modality.STOCK}>Stock</option>
+              <option value={Modality.SALAIRE}>Salaire</option>
               <option value={Modality.AUTRE}>Autre</option>
             </select>
           </div>

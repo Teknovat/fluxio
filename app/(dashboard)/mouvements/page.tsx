@@ -28,6 +28,7 @@ export default function MouvementsPage() {
   const [dateTo, setDateTo] = useState("");
   const [selectedIntervenantId, setSelectedIntervenantId] = useState("");
   const [selectedType, setSelectedType] = useState<"ALL" | MouvementType>("ALL");
+  const [selectedModality, setSelectedModality] = useState("");
 
   // Fetch user data from localStorage
   useEffect(() => {
@@ -50,7 +51,7 @@ export default function MouvementsPage() {
   useEffect(() => {
     fetchMouvements();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateFrom, dateTo, selectedIntervenantId, selectedType]);
+  }, [dateFrom, dateTo, selectedIntervenantId, selectedType, selectedModality]);
 
   const fetchIntervenants = async () => {
     try {
@@ -72,6 +73,7 @@ export default function MouvementsPage() {
       if (dateTo) params.append("dateTo", dateTo);
       if (selectedIntervenantId) params.append("intervenantId", selectedIntervenantId);
       if (selectedType !== "ALL") params.append("type", selectedType);
+      if (selectedModality) params.append("modality", selectedModality);
 
       const response = await fetch(`/api/mouvements?${params.toString()}`);
       if (response.ok) {
@@ -91,6 +93,7 @@ export default function MouvementsPage() {
     setDateTo("");
     setSelectedIntervenantId("");
     setSelectedType("ALL");
+    setSelectedModality("");
   };
 
   const formatDate = (date: Date | string) => {
@@ -156,28 +159,30 @@ export default function MouvementsPage() {
         <h1 className="text-2xl font-bold text-gray-900">Mouvements</h1>
         <div className="flex items-center space-x-3">
           {isAdmin && <CurrencySelector onCurrencyChange={handleCurrencyChange} />}
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <svg
-              className="mr-2 h-5 w-5"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          {isAdmin && (
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Ajouter un mouvement
-          </button>
+              <svg
+                className="mr-2 h-5 w-5"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Ajouter un mouvement
+            </button>
+          )}
         </div>
       </div>
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">Filtres</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Date From */}
           <div>
             <label htmlFor="dateFrom" className="block text-sm font-medium text-gray-700 mb-1">
@@ -240,6 +245,27 @@ export default function MouvementsPage() {
               <option value="ALL">Tous les types</option>
               <option value="ENTREE">Entrée</option>
               <option value="SORTIE">Sortie</option>
+            </select>
+          </div>
+
+          {/* Modality Filter */}
+          <div>
+            <label htmlFor="modality" className="block text-sm font-medium text-gray-700 mb-1">
+              Modalité
+            </label>
+            <select
+              id="modality"
+              value={selectedModality}
+              onChange={(e) => setSelectedModality(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Toutes les modalités</option>
+              <option value="ESPECES">Espèces</option>
+              <option value="CHEQUE">Chèque</option>
+              <option value="VIREMENT">Virement</option>
+              <option value="STOCK">Stock</option>
+              <option value="SALAIRE">Salaire</option>
+              <option value="AUTRE">Autre</option>
             </select>
           </div>
         </div>
