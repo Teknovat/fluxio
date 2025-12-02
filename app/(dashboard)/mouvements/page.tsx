@@ -28,7 +28,8 @@ export default function MouvementsPage() {
   const [dateTo, setDateTo] = useState("");
   const [selectedIntervenantId, setSelectedIntervenantId] = useState("");
   const [selectedType, setSelectedType] = useState<"ALL" | MouvementType>("ALL");
-  const [selectedModality, setSelectedModality] = useState("");
+  const [selectedModalities, setSelectedModalities] = useState<string[]>([]);
+  const [showModalityDropdown, setShowModalityDropdown] = useState(false);
 
   // Fetch user data from localStorage
   useEffect(() => {
@@ -42,6 +43,19 @@ export default function MouvementsPage() {
     }
   }, []);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showModalityDropdown && !target.closest(".modality-filter-container")) {
+        setShowModalityDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showModalityDropdown]);
+
   // Fetch intervenants on mount
   useEffect(() => {
     fetchIntervenants();
@@ -51,7 +65,7 @@ export default function MouvementsPage() {
   useEffect(() => {
     fetchMouvements();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateFrom, dateTo, selectedIntervenantId, selectedType, selectedModality]);
+  }, [dateFrom, dateTo, selectedIntervenantId, selectedType, selectedModalities]);
 
   const fetchIntervenants = async () => {
     try {
@@ -73,7 +87,9 @@ export default function MouvementsPage() {
       if (dateTo) params.append("dateTo", dateTo);
       if (selectedIntervenantId) params.append("intervenantId", selectedIntervenantId);
       if (selectedType !== "ALL") params.append("type", selectedType);
-      if (selectedModality) params.append("modality", selectedModality);
+      if (selectedModalities.length > 0) {
+        selectedModalities.forEach((modality) => params.append("modality", modality));
+      }
 
       const response = await fetch(`/api/mouvements?${params.toString()}`);
       if (response.ok) {
@@ -93,8 +109,23 @@ export default function MouvementsPage() {
     setDateTo("");
     setSelectedIntervenantId("");
     setSelectedType("ALL");
-    setSelectedModality("");
+    setSelectedModalities([]);
   };
+
+  const toggleModality = (modality: string) => {
+    setSelectedModalities((prev) =>
+      prev.includes(modality) ? prev.filter((m) => m !== modality) : [...prev, modality]
+    );
+  };
+
+  const modalityOptions = [
+    { value: "ESPECES", label: "Espèces" },
+    { value: "CHEQUE", label: "Chèque" },
+    { value: "VIREMENT", label: "Virement" },
+    { value: "STOCK", label: "Stock" },
+    { value: "SALAIRE", label: "Salaire" },
+    { value: "AUTRE", label: "Autre" },
+  ];
 
   const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString("fr-FR");
@@ -248,25 +279,84 @@ export default function MouvementsPage() {
             </select>
           </div>
 
-          {/* Modality Filter */}
-          <div>
-            <label htmlFor="modality" className="block text-sm font-medium text-gray-700 mb-1">
-              Modalité
+          {/* Modality Filter - Multi-select */}
+          <div className="relative modality-filter-container">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Modalités {selectedModalities.length > 0 && `(${selectedModalities.length})`}
             </label>
-            <select
-              id="modality"
-              value={selectedModality}
-              onChange={(e) => setSelectedModality(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            <button
+              type="button"
+              onClick={() => setShowModalityDropdown(!showModalityDropdown)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-left flex justify-between items-center"
             >
-              <option value="">Toutes les modalités</option>
-              <option value="ESPECES">Espèces</option>
-              <option value="CHEQUE">Chèque</option>
-              <option value="VIREMENT">Virement</option>
-              <option value="STOCK">Stock</option>
-              <option value="SALAIRE">Salaire</option>
-              <option value="AUTRE">Autre</option>
-            </select>
+              <span className="text-sm text-gray-700">
+                {selectedModalities.length === 0
+                  ? "Toutes les modalités"
+                  : selectedModalities.length === modalityOptions.length
+                  ? "Toutes sélectionnées"
+                  : `${selectedModalities.length} sélectionnée${selectedModalities.length > 1 ? "s" : ""}`}
+              </span>
+              <svg
+                className={`w-5 h-5 text-gray-400 transition-transform ${showModalityDropdown ? "rotate-180" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Dropdown */}
+            {showModalityDropdown && (
+              <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg">
+                <div className="p-2 space-y-1 max-h-60 overflow-y-auto">
+                  {modalityOptions.map((option) => (
+                    <label
+                      key={option.value}
+                      className="flex items-center px-3 py-2 hover:bg-gray-50 rounded cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedModalities.includes(option.value)}
+                        onChange={() => toggleModality(option.value)}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Selected modalities badges */}
+            {selectedModalities.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {selectedModalities.map((modality) => {
+                  const option = modalityOptions.find((o) => o.value === modality);
+                  return (
+                    <span
+                      key={modality}
+                      className="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded"
+                    >
+                      {option?.label}
+                      <button
+                        type="button"
+                        onClick={() => toggleModality(modality)}
+                        className="ml-1 hover:text-blue-900"
+                      >
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path
+                            fillRule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 

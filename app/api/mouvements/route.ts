@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
         const dateTo = searchParams.get('dateTo');
         const intervenantId = searchParams.get('intervenantId');
         const type = searchParams.get('type');
-        const modality = searchParams.get('modality');
+        const modalities = searchParams.getAll('modality');
 
         // Build Prisma query with filters
         const where: any = {};
@@ -47,9 +47,16 @@ export async function GET(request: NextRequest) {
             where.type = type;
         }
 
-        // Modality filter
-        if (modality && ['ESPECES', 'CHEQUE', 'VIREMENT', 'STOCK', 'SALAIRE', 'AUTRE'].includes(modality)) {
-            where.modality = modality;
+        // Modality filter - support multiple modalities
+        if (modalities.length > 0) {
+            const validModalities = modalities.filter(m =>
+                ['ESPECES', 'CHEQUE', 'VIREMENT', 'STOCK', 'SALAIRE', 'AUTRE'].includes(m)
+            );
+            if (validModalities.length > 0) {
+                where.modality = {
+                    in: validModalities
+                };
+            }
         }
 
         // Fetch mouvements with intervenant data
