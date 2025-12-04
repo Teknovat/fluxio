@@ -15,14 +15,18 @@ export async function PATCH(
     { params }: { params: { id: string } }
 ) {
     try {
-        // Verify admin authentication
-        await requireAdmin(request);
+        // Verify admin authentication and get tenant
+        const payload = await requireAdmin(request);
+        const tenantId = payload.tenantId;
 
         const { id } = params;
 
-        // Check if intervenant exists
-        const existingIntervenant = await prisma.intervenant.findUnique({
-            where: { id },
+        // Check if intervenant exists AND belongs to same tenant
+        const existingIntervenant = await prisma.intervenant.findFirst({
+            where: {
+                id,
+                tenantId, // CRITICAL: Verify intervenant belongs to tenant
+            },
         });
 
         if (!existingIntervenant) {

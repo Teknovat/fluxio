@@ -12,16 +12,19 @@ import { ZodError } from 'zod';
  */
 export async function GET(request: NextRequest) {
     try {
-        // Verify authentication (accessible to all authenticated users)
-        await requireAuth(request);
+        // Verify authentication and get tenant
+        const payload = await requireAuth(request);
+        const tenantId = payload.tenantId;
 
         // Parse query parameters
         const { searchParams } = new URL(request.url);
         const typeParam = searchParams.get('type');
         const activeParam = searchParams.get('active');
 
-        // Build filter object
-        const where: any = {};
+        // Build filter object - ALWAYS filter by tenantId
+        const where: any = {
+            tenantId, // CRITICAL: Filter by tenant
+        };
 
         // Filter by type if provided
         if (typeParam) {
@@ -55,16 +58,18 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
     try {
-        // Verify admin authentication
-        await requireAdmin(request);
+        // Verify admin authentication and get tenant
+        const payload = await requireAdmin(request);
+        const tenantId = payload.tenantId;
 
         // Parse and validate request body
         const body = await request.json();
         const validatedData = createIntervenantSchema.parse(body);
 
-        // Create intervenant in database
+        // Create intervenant in database with tenantId
         const newIntervenant = await prisma.intervenant.create({
             data: {
+                tenantId, // CRITICAL: Set tenant
                 name: validatedData.name,
                 type: validatedData.type,
                 active: true, // New intervenants are active by default

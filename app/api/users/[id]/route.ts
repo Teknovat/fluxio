@@ -16,14 +16,18 @@ export async function PATCH(
     { params }: { params: { id: string } }
 ) {
     try {
-        // Verify admin authentication
-        await requireAdmin(request);
+        // Verify admin authentication and get tenant
+        const payload = await requireAdmin(request);
+        const tenantId = payload.tenantId;
 
         const userId = params.id;
 
-        // Check if user exists
-        const existingUser = await prisma.user.findUnique({
-            where: { id: userId },
+        // Check if user exists AND belongs to same tenant
+        const existingUser = await prisma.user.findFirst({
+            where: {
+                id: userId,
+                tenantId, // CRITICAL: Verify user belongs to tenant
+            },
         });
 
         if (!existingUser) {
@@ -43,9 +47,10 @@ export async function PATCH(
 
         // If deactivating an admin, check if it's the last active admin
         if (validatedData.active === false && existingUser.role === 'ADMIN' && existingUser.active) {
-            // Count active admins
+            // Count active admins IN THIS TENANT
             const activeAdminCount = await prisma.user.count({
                 where: {
+                    tenantId, // CRITICAL: Count only in this tenant
                     role: 'ADMIN',
                     active: true,
                 },
@@ -72,10 +77,15 @@ export async function PATCH(
         }
 
         if (validatedData.email !== undefined) {
-            // Check email uniqueness if email is being changed
+            // Check email uniqueness if email is being changed IN THIS TENANT
             if (validatedData.email !== existingUser.email) {
                 const emailExists = await prisma.user.findUnique({
-                    where: { email: validatedData.email },
+                    where: {
+                        tenantId_email: {
+                            tenantId,
+                            email: validatedData.email,
+                        },
+                    },
                 });
 
                 if (emailExists) {

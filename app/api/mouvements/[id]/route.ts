@@ -15,14 +15,18 @@ export async function PATCH(
     { params }: { params: { id: string } }
 ) {
     try {
-        // Verify admin authentication
-        await requireAdmin(request);
+        // Verify admin authentication and get tenant
+        const payload = await requireAdmin(request);
+        const tenantId = payload.tenantId;
 
         const { id } = params;
 
-        // Check if mouvement exists
-        const existingMouvement = await prisma.mouvement.findUnique({
-            where: { id },
+        // Check if mouvement exists AND belongs to same tenant
+        const existingMouvement = await prisma.mouvement.findFirst({
+            where: {
+                id,
+                tenantId, // CRITICAL: Verify mouvement belongs to tenant
+            },
         });
 
         if (!existingMouvement) {
@@ -40,10 +44,11 @@ export async function PATCH(
         const body = await request.json();
         const validatedData = createMouvementSchema.parse(body);
 
-        // Verify intervenant exists (can be inactive for edits)
-        const intervenant = await prisma.intervenant.findUnique({
+        // Verify intervenant exists AND belongs to same tenant (can be inactive for edits)
+        const intervenant = await prisma.intervenant.findFirst({
             where: {
                 id: validatedData.intervenantId,
+                tenantId, // CRITICAL: Verify intervenant belongs to tenant
             },
         });
 
@@ -112,14 +117,18 @@ export async function DELETE(
     { params }: { params: { id: string } }
 ) {
     try {
-        // Verify admin authentication
-        await requireAdmin(request);
+        // Verify admin authentication and get tenant
+        const payload = await requireAdmin(request);
+        const tenantId = payload.tenantId;
 
         const { id } = params;
 
-        // Check if mouvement exists
-        const existingMouvement = await prisma.mouvement.findUnique({
-            where: { id },
+        // Check if mouvement exists AND belongs to same tenant
+        const existingMouvement = await prisma.mouvement.findFirst({
+            where: {
+                id,
+                tenantId, // CRITICAL: Verify mouvement belongs to tenant
+            },
         });
 
         if (!existingMouvement) {

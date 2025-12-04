@@ -12,22 +12,25 @@ export async function middleware(request: NextRequest) {
     const token = request.cookies.get('auth-token');
     const { pathname } = request.nextUrl;
 
-    // Handle login page
-    if (pathname.startsWith('/login')) {
-        // If user is already authenticated, redirect to mouvements
-        if (token) {
+    // Public routes that don't require authentication
+    const publicRoutes = ['/', '/login', '/register', '/tenant-select'];
+    const isPublicRoute = publicRoutes.some(route => pathname === route);
+
+    if (isPublicRoute) {
+        // If user is already authenticated and tries to access auth pages, redirect to mouvements
+        if (token && (pathname === '/login' || pathname === '/register' || pathname === '/tenant-select')) {
             const payload = verifyTokenEdge(token.value);
             if (payload) {
                 return NextResponse.redirect(new URL('/mouvements', request.url));
             }
         }
-        // Allow access to login page for unauthenticated users
+        // Allow access to public routes
         return NextResponse.next();
     }
 
     // All other routes require authentication
     if (!token) {
-        return NextResponse.redirect(new URL('/login', request.url));
+        return NextResponse.redirect(new URL('/tenant-select', request.url));
     }
 
     // Verify token validity

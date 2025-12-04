@@ -190,8 +190,9 @@ export default function UserForm({ isOpen, onClose, onSuccess, editUser = null, 
 
   const getRoleLabel = (role: Role): string => {
     const labels: Record<Role, string> = {
-      ADMIN: "Administrateur",
-      USER: "Utilisateur",
+      [Role.SUPER_ADMIN]: "Super Administrateur",
+      [Role.ADMIN]: "Administrateur",
+      [Role.USER]: "Utilisateur",
     };
     return labels[role];
   };

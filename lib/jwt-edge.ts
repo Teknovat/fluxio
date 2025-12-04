@@ -58,6 +58,8 @@ export function verifyTokenEdge(token: string): JWTPayload | null {
             userId: payload.userId,
             email: payload.email,
             role: payload.role,
+            tenantId: payload.tenantId,
+            tenantSlug: payload.tenantSlug,
         };
     } catch (error) {
         return null;

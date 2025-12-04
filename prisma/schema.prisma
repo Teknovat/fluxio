@@ -6,36 +6,73 @@ generator client {
 }
 
 datasource db {
-  provider = "postgres"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// Tenant model for multi-tenancy support
+model Tenant {
+  id            String   @id @default(cuid())
+  name          String   // Company name
+  slug          String   @unique // URL-friendly identifier
+  subdomain     String?  @unique // Optional subdomain
+  active        Boolean  @default(true)
+  logo          String?
+  primaryColor  String?  @default("#3b82f6")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  users         User[]
+  intervenants  Intervenant[]
+  mouvements    Mouvement[]
+  
+  @@index([slug])
+  @@index([active])
 }
 
 // User model with Role enum (using String for SQLite compatibility)
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String // bcrypt hashed
-  role      String   @default("USER") // ADMIN or USER
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String               @id @default(cuid())
+  tenantId        String
+  tenant          Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name            String
+  email           String
+  password        String // bcrypt hashed
+  role            String               @default("USER") // SUPER_ADMIN, ADMIN or USER
+  active          Boolean              @default(true)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  reconciliations CashReconciliation[]
+  
+  @@unique([tenantId, email]) // Email unique per tenant
+  @@index([tenantId])
+  @@index([email])
 }
 
 // Intervenant model with IntervenantType enum (using String for SQLite compatibility)
 model Intervenant {
   id         String      @id @default(cuid())
+  tenantId   String
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name       String
   type       String // CLIENT, FOURNISSEUR, ASSOCIE, CAISSE_BANQUE, AUTRE
   active     Boolean     @default(true)
+  notes      String?
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
   mouvements Mouvement[]
+  advances   Advance[]
+  
+  @@index([tenantId])
+  @@index([tenantId, type])
 }
 
 // Mouvement model with MouvementType and Modality enums (using String for SQLite compatibility)
 model Mouvement {
   id            String      @id @default(cuid())
+  tenantId      String
+  tenant        Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   date          DateTime
   intervenantId String
   intervenant   Intervenant @relation(fields: [intervenantId], references: [id], onDelete: Restrict)
@@ -43,11 +80,103 @@ model Mouvement {
   amount        Float
   reference     String?
   modality      String? // ESPECES, CHEQUE, VIREMENT, STOCK, SALAIRE, AUTRE
+  category      String? // SALAIRES, ACHATS_STOCK, FRAIS_GENERAUX, AVANCES_ASSOCIES, VENTES, CHARGES_FIXES, AUTRES
   note          String?
+  isAdvance     Boolean     @default(false)
+  advanceId     String?
+  advance       Advance?    @relation("AdvanceReimbursements", fields: [advanceId], references: [id])
+  linkedAdvance Advance?    @relation("AdvanceMovement")
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
+  @@index([tenantId])
+  @@index([tenantId, date])
+  @@index([tenantId, intervenantId])
+  @@index([tenantId, type])
+  @@index([tenantId, category])
   @@index([date])
   @@index([intervenantId])
   @@index([type])
+  @@index([advanceId])
+}
+
+// Advance model for tracking advances given to intervenants
+model Advance {
+  id             String      @id @default(cuid())
+  tenantId       String
+  mouvementId    String      @unique
+  mouvement      Mouvement   @relation("AdvanceMovement", fields: [mouvementId], references: [id])
+  intervenantId  String
+  intervenant    Intervenant @relation(fields: [intervenantId], references: [id], onDelete: Restrict)
+  amount         Float
+  dueDate        DateTime?
+  status         String      @default("EN_COURS") // EN_COURS, REMBOURSE_PARTIEL, REMBOURSE_TOTAL
+  reimbursements Mouvement[] @relation("AdvanceReimbursements")
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, intervenantId])
+  @@index([tenantId, status])
+  @@index([intervenantId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+// CashReconciliation model for tracking cash counts
+model CashReconciliation {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  date               DateTime
+  theoreticalBalance Float
+  physicalCount      Float
+  gap                Float
+  note               String?
+  userId             String
+  user               User     @relation(fields: [userId], references: [id])
+  createdAt          DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, date])
+  @@index([date])
+}
+
+// Alert model for system notifications
+model Alert {
+  id          String    @id @default(cuid())
+  tenantId    String
+  type        String // DEBT_THRESHOLD, LOW_CASH, OVERDUE_ADVANCE, RECONCILIATION_GAP
+  title       String
+  message     String
+  severity    String // INFO, WARNING, ERROR
+  relatedId   String?
+  dismissed   Boolean   @default(false)
+  dismissedAt DateTime?
+  dismissedBy String?
+  createdAt   DateTime  @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, dismissed])
+  @@index([dismissed])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// Settings model for tenant-specific configuration
+model Settings {
+  id                         String   @id @default(cuid())
+  tenantId                   String   @unique
+  debtThreshold              Float    @default(10000)
+  minCashBalance             Float    @default(5000)
+  reconciliationGapThreshold Float    @default(500)
+  defaultAdvanceDueDays      Int      @default(30)
+  companyName                String   @default("Fluxio")
+  companyLogo                String?
+  currency                   String   @default("XAF")
+  alertsEnabled              Boolean  @default(true)
+  categoriesEnabled          Boolean  @default(true)
+  advancesEnabled            Boolean  @default(true)
+  updatedAt                  DateTime @updatedAt
+
+  @@index([tenantId])
 }

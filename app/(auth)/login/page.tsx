@@ -1,14 +1,27 @@
 "use client";
 
-import { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useState, FormEvent, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [tenantSlug, setTenantSlug] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Get tenant from URL params
+  useEffect(() => {
+    const tenant = searchParams.get("tenant");
+    if (tenant) {
+      setTenantSlug(tenant);
+    } else {
+      // If no tenant in URL, redirect to tenant selection
+      router.push("/tenant-select");
+    }
+  }, [searchParams, router]);
 
   // Client-side validation
   const validateForm = (): boolean => {
@@ -52,7 +65,7 @@ export default function LoginPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, tenantSlug }),
       });
 
       const data = await response.json();
@@ -88,7 +101,12 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h1 className="text-center text-4xl font-bold text-blue-600">Fluxio</h1>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Sign in to your account</h2>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Connexion</h2>
+          {tenantSlug && (
+            <p className="mt-2 text-center text-sm text-gray-600">
+              Entreprise : <span className="font-medium">{tenantSlug}</span>
+            </p>
+          )}
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -177,15 +195,35 @@ export default function LoginPage() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  Signing in...
+                  Connexion...
                 </span>
               ) : (
-                "Sign in"
+                "Se connecter"
               )}
             </button>
+          </div>
+
+          <div className="text-center">
+            <a href="/tenant-select" className="text-sm text-blue-600 hover:text-blue-500">
+              {"← Changer d'entreprise"}
+            </a>
           </div>
         </form>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

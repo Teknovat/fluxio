@@ -8,7 +8,9 @@ const JWT_EXPIRES_IN = '24h';
 export interface JWTPayload {
     userId: string;
     email: string;
-    role: string; // 'ADMIN' | 'USER'
+    role: string; // 'SUPER_ADMIN' | 'ADMIN' | 'USER'
+    tenantId: string;
+    tenantSlug: string;
 }
 
 /**
@@ -103,9 +105,28 @@ export async function requireAdmin(request: Request): Promise<JWTPayload> {
     // First verify authentication
     const payload = await requireAuth(request);
 
-    // Check if user has ADMIN role
-    if (payload.role !== 'ADMIN') {
+    // Check if user has ADMIN or SUPER_ADMIN role
+    if (payload.role !== 'ADMIN' && payload.role !== 'SUPER_ADMIN') {
         throw new Error('Forbidden: Insufficient permissions');
+    }
+
+    return payload;
+}
+
+/**
+ * Extract and verify JWT token from request cookies and check for SUPER_ADMIN role
+ * Throws 401 error if token is missing or invalid
+ * Throws 403 error if user is not a super admin
+ * @param request - Next.js request object
+ * @returns Decoded JWT payload
+ */
+export async function requireSuperAdmin(request: Request): Promise<JWTPayload> {
+    // First verify authentication
+    const payload = await requireAuth(request);
+
+    // Check if user has SUPER_ADMIN role
+    if (payload.role !== 'SUPER_ADMIN') {
+        throw new Error('Forbidden: Super admin access required');
     }
 
     return payload;

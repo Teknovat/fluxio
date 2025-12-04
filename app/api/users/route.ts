@@ -13,11 +13,15 @@ import { ZodError } from 'zod';
  */
 export async function GET(request: NextRequest) {
     try {
-        // Verify admin authentication
-        await requireAdmin(request);
+        // Verify admin authentication and get tenant
+        const payload = await requireAdmin(request);
+        const tenantId = payload.tenantId;
 
-        // Fetch all users from database
+        // Fetch all users from database - ONLY from same tenant
         const users = await prisma.user.findMany({
+            where: {
+                tenantId, // CRITICAL: Filter by tenant
+            },
             select: {
                 id: true,
                 name: true,
@@ -47,17 +51,21 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
     try {
-        // Verify admin authentication
-        await requireAdmin(request);
+        // Verify admin authentication and get tenant
+        const payload = await requireAdmin(request);
+        const tenantId = payload.tenantId;
 
         // Parse and validate request body
         const body = await request.json();
         const validatedData = createUserSchema.parse(body);
 
-        // Check email uniqueness
+        // Check email uniqueness IN THIS TENANT
         const existingUser = await prisma.user.findUnique({
             where: {
-                email: validatedData.email,
+                tenantId_email: {
+                    tenantId,
+                    email: validatedData.email,
+                },
             },
         });
 
@@ -75,9 +83,10 @@ export async function POST(request: NextRequest) {
         // Hash password with bcrypt
         const hashedPassword = await hashPassword(validatedData.password);
 
-        // Create user in database
+        // Create user in database with tenantId
         const newUser = await prisma.user.create({
             data: {
+                tenantId, // CRITICAL: Set tenant
                 name: validatedData.name,
                 email: validatedData.email,
                 password: hashedPassword,

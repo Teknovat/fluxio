@@ -12,8 +12,9 @@ import { ZodError } from 'zod';
  */
 export async function GET(request: NextRequest) {
     try {
-        // Verify authentication
-        await requireAuth(request);
+        // Verify authentication and get tenant
+        const payload = await requireAuth(request);
+        const tenantId = payload.tenantId;
 
         // Parse query parameters
         const { searchParams } = new URL(request.url);
@@ -23,8 +24,10 @@ export async function GET(request: NextRequest) {
         const type = searchParams.get('type');
         const modalities = searchParams.getAll('modality');
 
-        // Build Prisma query with filters
-        const where: any = {};
+        // Build Prisma query with filters - ALWAYS filter by tenantId
+        const where: any = {
+            tenantId, // CRITICAL: Filter by tenant
+        };
 
         // Date range filter
         if (dateFrom || dateTo) {
@@ -116,17 +119,19 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
     try {
-        // Verify admin authentication
-        await requireAdmin(request);
+        // Verify admin authentication and get tenant
+        const payload = await requireAdmin(request);
+        const tenantId = payload.tenantId;
 
         // Parse and validate request body
         const body = await request.json();
         const validatedData = createMouvementSchema.parse(body);
 
-        // Verify intervenant exists and is active
-        const intervenant = await prisma.intervenant.findUnique({
+        // Verify intervenant exists, is active, AND belongs to the same tenant
+        const intervenant = await prisma.intervenant.findFirst({
             where: {
                 id: validatedData.intervenantId,
+                tenantId, // CRITICAL: Verify intervenant belongs to tenant
             },
         });
 
@@ -152,9 +157,10 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Create mouvement in database
+        // Create mouvement in database with tenantId
         const newMouvement = await prisma.mouvement.create({
             data: {
+                tenantId, // CRITICAL: Set tenant
                 date: new Date(validatedData.date),
                 intervenantId: validatedData.intervenantId,
                 type: validatedData.type,

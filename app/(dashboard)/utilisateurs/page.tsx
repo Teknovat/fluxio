@@ -67,8 +67,9 @@ export default function UtilisateursPage() {
 
   const getRoleLabel = (role: Role): string => {
     const labels: Record<Role, string> = {
-      ADMIN: "Administrateur",
-      USER: "Utilisateur",
+      [Role.SUPER_ADMIN]: "Super Administrateur",
+      [Role.ADMIN]: "Administrateur",
+      [Role.USER]: "Utilisateur",
     };
     return labels[role];
   };

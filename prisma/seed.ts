@@ -9,11 +9,30 @@ async function main() {
     // Hash password using bcrypt (salt rounds = 10)
     const adminPassword = await bcrypt.hash('admin123', 10);
 
-    // Create default admin user
-    const admin = await prisma.user.upsert({
-        where: { email: 'admin@fluxio.com' },
+    // Create default tenant
+    const defaultTenant = await prisma.tenant.upsert({
+        where: { slug: 'default' },
         update: {},
         create: {
+            name: 'Default Company',
+            slug: 'default',
+            active: true,
+        },
+    });
+
+    console.log('✓ Created default tenant:', defaultTenant.name);
+
+    // Create default admin user
+    const admin = await prisma.user.upsert({
+        where: {
+            tenantId_email: {
+                tenantId: defaultTenant.id,
+                email: 'admin@fluxio.com',
+            },
+        },
+        update: {},
+        create: {
+            tenantId: defaultTenant.id,
             name: 'Admin',
             email: 'admin@fluxio.com',
             password: adminPassword,
@@ -39,6 +58,7 @@ async function main() {
             update: {},
             create: {
                 id: `seed-${intervenant.name.toLowerCase().replace(/\s+/g, '-')}`,
+                tenantId: defaultTenant.id,
                 name: intervenant.name,
                 type: intervenant.type,
                 active: true,
@@ -51,6 +71,7 @@ async function main() {
     // Optional: Add sample mouvements for testing
     const sampleMouvements = [
         {
+            tenantId: defaultTenant.id,
             date: new Date('2024-01-15'),
             intervenantId: 'seed-client-abc',
             type: 'ENTREE',
@@ -60,6 +81,7 @@ async function main() {
             note: 'Paiement facture janvier',
         },
         {
+            tenantId: defaultTenant.id,
             date: new Date('2024-01-20'),
             intervenantId: 'seed-fournisseur-xyz',
             type: 'SORTIE',
@@ -69,6 +91,7 @@ async function main() {
             note: 'Achat matériel',
         },
         {
+            tenantId: defaultTenant.id,
             date: new Date('2024-01-25'),
             intervenantId: 'seed-associé-jean-dupont',
             type: 'SORTIE',
@@ -78,6 +101,7 @@ async function main() {
             note: 'Salaire janvier',
         },
         {
+            tenantId: defaultTenant.id,
             date: new Date('2024-02-01'),
             intervenantId: 'seed-caisse-espèces',
             type: 'ENTREE',
@@ -86,6 +110,7 @@ async function main() {
             note: 'Vente comptant',
         },
         {
+            tenantId: defaultTenant.id,
             date: new Date('2024-02-05'),
             intervenantId: 'seed-fournisseur-xyz',
             type: 'SORTIE',

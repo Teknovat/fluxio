@@ -81,6 +81,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   Mouvements
                 </Link>
 
+                <Link
+                  href="/soldes"
+                  className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    isActive("/soldes")
+                      ? "bg-blue-50 text-blue-700 border-b-2 border-blue-600"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                  }`}
+                >
+                  Soldes
+                </Link>
+
                 {isAdmin && (
                   <>
                     <Link
@@ -176,6 +187,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 }`}
               >
                 Mouvements
+              </Link>
+
+              <Link
+                href="/soldes"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`block px-4 py-2 text-base font-medium ${
+                  isActive("/soldes")
+                    ? "bg-blue-50 text-blue-700 border-l-4 border-blue-600"
+                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                }`}
+              >
+                Soldes
               </Link>
 
               {isAdmin && (

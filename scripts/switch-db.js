@@ -6,9 +6,12 @@
  *   node scripts/switch-db.js sqlite
  *   node scripts/switch-db.js postgres
  */
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const fs = require('fs');
-const path = require('path');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const schemaPath = path.join(__dirname, '../prisma/schema.prisma');
 const provider = process.argv[2];
