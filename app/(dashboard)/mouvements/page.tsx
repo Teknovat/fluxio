@@ -122,8 +122,6 @@ export default function MouvementsPage() {
     { value: "ESPECES", label: "Espèces" },
     { value: "CHEQUE", label: "Chèque" },
     { value: "VIREMENT", label: "Virement" },
-    { value: "STOCK", label: "Stock" },
-    { value: "SALAIRE", label: "Salaire" },
     { value: "AUTRE", label: "Autre" },
   ];
 

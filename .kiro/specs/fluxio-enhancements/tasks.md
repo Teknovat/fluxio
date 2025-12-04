@@ -94,9 +94,9 @@
     - Make clickable
     - _Requirements: 11.3, 11.4, 11.5_
 
-- [ ] 7. Create Intervenant Detail page
+- [-] 7. Create Intervenant Detail page
 
-  - [ ] 7.1 Create app/(dashboard)/intervenants/[id]/page.tsx
+  - [x] 7.1 Create app/(dashboard)/intervenants/[id]/page.tsx
 
     - Fetch intervenant balance and movements
     - Display summary statistics card
@@ -109,7 +109,7 @@
     - Add export button
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6, 17.9, 17.10_
 
-  - [ ] 7.2 Add notes field to intervenant form
+  - [x] 7.2 Add notes field to intervenant form
     - Update IntervenantForm component
     - Add textarea for notes
     - Save notes to database

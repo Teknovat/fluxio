@@ -93,7 +93,7 @@ Fluxio is a web application designed to replace Excel-based cash flow tracking f
 3. THE Fluxio SHALL default the date field to the current date
 4. THE Fluxio SHALL populate the intervenant dropdown with only active intervenants
 5. WHEN a user submits a movement with amount less than or equal to zero, THE Fluxio SHALL reject the submission and display a validation error
-6. THE Fluxio SHALL allow optional fields for reference, modality (ESPECES, CHEQUE, VIREMENT, STOCK, AUTRE), and note
+6. THE Fluxio SHALL allow optional fields for reference, modality (ESPECES, CHEQUE, VIREMENT, AUTRE), and note
 7. WHEN a movement is successfully created, THE Fluxio SHALL refresh the movements list and display the new entry
 
 ### Requirement 7: Movement Editing (Admin Only)

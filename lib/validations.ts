@@ -51,7 +51,7 @@ export const createMouvementSchema = z.object({
     }),
     amount: z.number().positive("Amount must be greater than 0"),
     reference: z.string().optional(),
-    modality: z.enum(["ESPECES", "CHEQUE", "VIREMENT", "STOCK", "SALAIRE", "AUTRE"], {
+    modality: z.enum(["ESPECES", "CHEQUE", "VIREMENT", "AUTRE"], {
         errorMap: () => ({ message: "Invalid modality" }),
     }).optional(),
     note: z.string().optional(),

@@ -79,7 +79,7 @@ model Mouvement {
   type          String // ENTREE or SORTIE
   amount        Float
   reference     String?
-  modality      String? // ESPECES, CHEQUE, VIREMENT, STOCK, SALAIRE, AUTRE
+  modality      String? // ESPECES, CHEQUE, VIREMENT, AUTRE
   category      String? // SALAIRES, ACHATS_STOCK, FRAIS_GENERAUX, AVANCES_ASSOCIES, VENTES, CHARGES_FIXES, AUTRES
   note          String?
   isAdvance     Boolean     @default(false)

@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
         // Modality filter - support multiple modalities
         if (modalities.length > 0) {
             const validModalities = modalities.filter(m =>
-                ['ESPECES', 'CHEQUE', 'VIREMENT', 'STOCK', 'SALAIRE', 'AUTRE'].includes(m)
+                ['ESPECES', 'CHEQUE', 'VIREMENT', 'AUTRE'].includes(m)
             );
             if (validModalities.length > 0) {
                 where.modality = {

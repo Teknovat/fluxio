@@ -26,6 +26,7 @@ export default function IntervenantForm({
   const [name, setName] = useState("");
   const [type, setType] = useState<IntervenantType>(IntervenantType.CLIENT);
   const [active, setActive] = useState(true);
+  const [notes, setNotes] = useState("");
 
   // Populate form when editing
   useEffect(() => {
@@ -33,11 +34,13 @@ export default function IntervenantForm({
       setName(editIntervenant.name);
       setType(editIntervenant.type);
       setActive(editIntervenant.active);
+      setNotes(editIntervenant.notes || "");
     } else {
       // Reset to defaults for new intervenant
       setName("");
       setType(IntervenantType.CLIENT);
       setActive(true);
+      setNotes("");
     }
   }, [editIntervenant, isOpen]);
 
@@ -72,6 +75,7 @@ export default function IntervenantForm({
       const payload: any = {
         name: name.trim(),
         type,
+        notes: notes.trim() || undefined,
       };
 
       // Include active status only when editing
@@ -122,6 +126,7 @@ export default function IntervenantForm({
     setName("");
     setType(IntervenantType.CLIENT);
     setActive(true);
+    setNotes("");
     setValidationErrors({});
     setError(null);
   };
@@ -197,6 +202,21 @@ export default function IntervenantForm({
               <option value={IntervenantType.AUTRE}>{getTypeLabel(IntervenantType.AUTRE)}</option>
             </select>
             {validationErrors.type && <p className="mt-1 text-sm text-red-600">{validationErrors.type}</p>}
+          </div>
+
+          {/* Notes Textarea */}
+          <div>
+            <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+              Notes
+            </label>
+            <textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              className="text-black w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Notes ou informations supplémentaires..."
+            />
           </div>
 
           {/* Active Checkbox (only for edit mode) */}

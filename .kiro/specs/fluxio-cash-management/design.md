@@ -146,7 +146,6 @@ enum Modality {
   ESPECES
   CHEQUE
   VIREMENT
-  STOCK
   AUTRE
 }
 ```
@@ -353,7 +352,6 @@ export enum Modality {
   ESPECES = "ESPECES",
   CHEQUE = "CHEQUE",
   VIREMENT = "VIREMENT",
-  STOCK = "STOCK",
   AUTRE = "AUTRE",
 }
 
@@ -447,7 +445,7 @@ export const createMouvementSchema = z.object({
   type: z.enum(["ENTREE", "SORTIE"]),
   amount: z.number().positive(),
   reference: z.string().optional(),
-  modality: z.enum(["ESPECES", "CHEQUE", "VIREMENT", "STOCK", "AUTRE"]).optional(),
+  modality: z.enum(["ESPECES", "CHEQUE", "VIREMENT", "AUTRE"]).optional(),
   note: z.string().optional(),
 });
 
