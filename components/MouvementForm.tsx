@@ -1,8 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Intervenant, MouvementType, Modality, Mouvement } from "@/types";
+import { Intervenant, MouvementType, Modality, Mouvement, MovementCategory } from "@/types";
 import { getCurrency } from "@/lib/currency";
+
+interface Category {
+  id: string;
+  code: string;
+  label: string;
+  color: string;
+  active: boolean;
+  sortOrder: number;
+}
 
 interface MouvementFormProps {
   isOpen: boolean;
@@ -22,6 +31,7 @@ export default function MouvementForm({
   onShowToast,
 }: MouvementFormProps) {
   const [intervenants, setIntervenants] = useState<Intervenant[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -33,13 +43,15 @@ export default function MouvementForm({
   const [amount, setAmount] = useState("");
   const [reference, setReference] = useState("");
   const [modality, setModality] = useState<Modality | "">("");
+  const [category, setCategory] = useState<MovementCategory | "">("");
   const [note, setNote] = useState("");
   const [currencySymbol, setCurrencySymbol] = useState("€");
 
-  // Fetch active intervenants and currency on mount
+  // Fetch active intervenants, categories, and currency on mount
   useEffect(() => {
     if (isOpen) {
       fetchIntervenants();
+      fetchCategories();
       const currency = getCurrency();
       setCurrencySymbol(currency.symbol);
     }
@@ -54,6 +66,7 @@ export default function MouvementForm({
       setAmount(editMouvement.amount.toString());
       setReference(editMouvement.reference || "");
       setModality(editMouvement.modality || "");
+      setCategory(editMouvement.category || "");
       setNote(editMouvement.note || "");
     } else {
       // Default to today's date for new mouvements
@@ -70,6 +83,18 @@ export default function MouvementForm({
       }
     } catch (error) {
       console.error("Error fetching intervenants:", error);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("/api/categories");
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.filter((cat: Category) => cat.active));
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
     }
   };
 
@@ -112,6 +137,7 @@ export default function MouvementForm({
         amount: parseFloat(amount),
         reference: reference || undefined,
         modality: modality || undefined,
+        category: category || undefined,
         note: note || undefined,
       };
 
@@ -161,6 +187,7 @@ export default function MouvementForm({
     setAmount("");
     setReference("");
     setModality("");
+    setCategory("");
     setNote("");
     setValidationErrors({});
     setError(null);
@@ -318,6 +345,34 @@ export default function MouvementForm({
               <option value={Modality.VIREMENT}>Virement</option>
               <option value={Modality.AUTRE}>Autre</option>
             </select>
+          </div>
+
+          {/* Category Select (Optional) */}
+          <div>
+            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+              Catégorie
+            </label>
+            <div className="relative">
+              <select
+                id="category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value as MovementCategory | "")}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Sélectionner une catégorie</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.code}>
+                    ● {cat.label}
+                  </option>
+                ))}
+              </select>
+              {category && categories.find((c) => c.code === category) && (
+                <div
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 rounded-full pointer-events-none"
+                  style={{ backgroundColor: categories.find((c) => c.code === category)?.color }}
+                />
+              )}
+            </div>
           </div>
 
           {/* Note Textarea (Optional) */}

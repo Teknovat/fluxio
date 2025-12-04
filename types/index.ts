@@ -211,6 +211,20 @@ export interface CategorySummary {
     percentage: number;
 }
 
+// CustomCategory interface for tenant-specific categories
+export interface CustomCategory {
+    id: string;
+    tenantId: string;
+    code: string;
+    label: string;
+    color: string;
+    active: boolean;
+    isDefault: boolean;
+    sortOrder: number;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
 // DashboardData interface for dashboard page
 export interface DashboardData {
     currentBalance: number;

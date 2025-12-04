@@ -73,6 +73,7 @@ export async function PATCH(
                 amount: validatedData.amount,
                 reference: validatedData.reference,
                 modality: validatedData.modality,
+                category: validatedData.category,
                 note: validatedData.note,
             },
             include: {

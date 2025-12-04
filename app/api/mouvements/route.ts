@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
         const intervenantId = searchParams.get('intervenantId');
         const type = searchParams.get('type');
         const modalities = searchParams.getAll('modality');
+        const category = searchParams.get('category');
 
         // Build Prisma query with filters - ALWAYS filter by tenantId
         const where: any = {
@@ -60,6 +61,11 @@ export async function GET(request: NextRequest) {
                     in: validModalities
                 };
             }
+        }
+
+        // Category filter
+        if (category && ['SALAIRES', 'ACHATS_STOCK', 'FRAIS_GENERAUX', 'AVANCES_ASSOCIES', 'VENTES', 'CHARGES_FIXES', 'AUTRES'].includes(category)) {
+            where.category = category;
         }
 
         // Fetch mouvements with intervenant data
@@ -167,6 +173,7 @@ export async function POST(request: NextRequest) {
                 amount: validatedData.amount,
                 reference: validatedData.reference,
                 modality: validatedData.modality,
+                category: validatedData.category,
                 note: validatedData.note,
             },
             include: {

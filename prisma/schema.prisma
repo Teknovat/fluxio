@@ -180,3 +180,21 @@ model Settings {
 
   @@index([tenantId])
 }
+
+// CustomCategory model for tenant-specific movement categories
+model CustomCategory {
+  id        String   @id @default(cuid())
+  tenantId  String
+  code      String   // Unique code for the category (e.g., SALAIRES, CUSTOM_1)
+  label     String   // Display label (e.g., "Salaires", "Marketing")
+  color     String   @default("#6B7280") // Hex color code for visual distinction
+  active    Boolean  @default(true)
+  isDefault Boolean  @default(false) // Whether this is a default system category
+  sortOrder Int      @default(0) // For custom ordering
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([tenantId, active])
+}

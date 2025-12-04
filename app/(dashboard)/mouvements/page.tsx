@@ -1,15 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Mouvement, Intervenant, MouvementType, MouvementSummary } from "@/types";
+import { Mouvement, Intervenant, MouvementType, MouvementSummary, MovementCategory } from "@/types";
 import MouvementForm from "@/components/MouvementForm";
 import Toast from "@/components/Toast";
 import CurrencySelector from "@/components/CurrencySelector";
 import { formatAmount as formatCurrency } from "@/lib/currency";
 
+interface Category {
+  id: string;
+  code: string;
+  label: string;
+  color: string;
+  active: boolean;
+  sortOrder: number;
+}
+
 export default function MouvementsPage() {
   const [mouvements, setMouvements] = useState<Mouvement[]>([]);
   const [intervenants, setIntervenants] = useState<Intervenant[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  // Helper function to get category color and label
+  const getCategoryInfo = (categoryCode: string | undefined) => {
+    if (!categoryCode) return null;
+    const category = categories.find((cat) => cat.code === categoryCode);
+    return category || null;
+  };
   const [summary, setSummary] = useState<MouvementSummary>({
     totalEntree: 0,
     totalSortie: 0,
@@ -30,6 +47,7 @@ export default function MouvementsPage() {
   const [selectedType, setSelectedType] = useState<"ALL" | MouvementType>("ALL");
   const [selectedModalities, setSelectedModalities] = useState<string[]>([]);
   const [showModalityDropdown, setShowModalityDropdown] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<"ALL" | MovementCategory>("ALL");
 
   // Fetch user data from localStorage
   useEffect(() => {
@@ -56,16 +74,17 @@ export default function MouvementsPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showModalityDropdown]);
 
-  // Fetch intervenants on mount
+  // Fetch intervenants and categories on mount
   useEffect(() => {
     fetchIntervenants();
+    fetchCategories();
   }, []);
 
   // Fetch mouvements when filters change
   useEffect(() => {
     fetchMouvements();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateFrom, dateTo, selectedIntervenantId, selectedType, selectedModalities]);
+  }, [dateFrom, dateTo, selectedIntervenantId, selectedType, selectedModalities, selectedCategory]);
 
   const fetchIntervenants = async () => {
     try {
@@ -76,6 +95,18 @@ export default function MouvementsPage() {
       }
     } catch (error) {
       console.error("Error fetching intervenants:", error);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("/api/categories");
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.filter((cat: Category) => cat.active));
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
     }
   };
 
@@ -90,6 +121,7 @@ export default function MouvementsPage() {
       if (selectedModalities.length > 0) {
         selectedModalities.forEach((modality) => params.append("modality", modality));
       }
+      if (selectedCategory !== "ALL") params.append("category", selectedCategory);
 
       const response = await fetch(`/api/mouvements?${params.toString()}`);
       if (response.ok) {
@@ -110,6 +142,7 @@ export default function MouvementsPage() {
     setSelectedIntervenantId("");
     setSelectedType("ALL");
     setSelectedModalities([]);
+    setSelectedCategory("ALL");
   };
 
   const toggleModality = (modality: string) => {
@@ -211,7 +244,7 @@ export default function MouvementsPage() {
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">Filtres</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {/* Date From */}
           <div>
             <label htmlFor="dateFrom" className="block text-sm font-medium text-gray-700 mb-1">
@@ -274,6 +307,26 @@ export default function MouvementsPage() {
               <option value="ALL">Tous les types</option>
               <option value="ENTREE">Entrée</option>
               <option value="SORTIE">Sortie</option>
+            </select>
+          </div>
+
+          {/* Category Filter */}
+          <div>
+            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+              Catégorie
+            </label>
+            <select
+              id="category"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value as "ALL" | MovementCategory)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="ALL">Toutes les catégories</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.code}>
+                  {cat.label}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -432,6 +485,9 @@ export default function MouvementsPage() {
                       Modalité
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Catégorie
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Note
                     </th>
                     {isAdmin && (
@@ -466,6 +522,30 @@ export default function MouvementsPage() {
                         {mouvement.reference || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{mouvement.modality || "-"}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {mouvement.category ? (
+                          (() => {
+                            const categoryInfo = getCategoryInfo(mouvement.category);
+                            return categoryInfo ? (
+                              <span
+                                className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full"
+                                style={{
+                                  backgroundColor: categoryInfo.color + "20",
+                                  color: categoryInfo.color,
+                                  borderColor: categoryInfo.color,
+                                  borderWidth: "1px",
+                                }}
+                              >
+                                {categoryInfo.label}
+                              </span>
+                            ) : (
+                              <span className="text-sm text-gray-500">{mouvement.category}</span>
+                            );
+                          })()
+                        ) : (
+                          <span className="text-sm text-gray-500">-</span>
+                        )}
+                      </td>
                       <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{mouvement.note || "-"}</td>
                       {isAdmin && (
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -515,6 +595,29 @@ export default function MouvementsPage() {
                   {mouvement.modality && (
                     <div className="text-sm text-gray-600">
                       <span className="font-medium">Modalité:</span> {mouvement.modality}
+                    </div>
+                  )}
+                  {mouvement.category && (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium text-gray-600">Catégorie:</span>
+                      {(() => {
+                        const categoryInfo = getCategoryInfo(mouvement.category);
+                        return categoryInfo ? (
+                          <span
+                            className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full"
+                            style={{
+                              backgroundColor: categoryInfo.color + "20",
+                              color: categoryInfo.color,
+                              borderColor: categoryInfo.color,
+                              borderWidth: "1px",
+                            }}
+                          >
+                            {categoryInfo.label}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-600">{mouvement.category}</span>
+                        );
+                      })()}
                     </div>
                   )}
                   {mouvement.note && (

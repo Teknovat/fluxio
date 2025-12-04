@@ -106,6 +106,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </Link>
 
                     <Link
+                      href="/categories"
+                      className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                        isActive("/categories")
+                          ? "bg-blue-50 text-blue-700 border-b-2 border-blue-600"
+                          : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                      }`}
+                    >
+                      Catégories
+                    </Link>
+
+                    <Link
                       href="/utilisateurs"
                       className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                         isActive("/utilisateurs")
@@ -213,6 +224,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     }`}
                   >
                     Intervenants
+                  </Link>
+
+                  <Link
+                    href="/categories"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`block px-4 py-2 text-base font-medium ${
+                      isActive("/categories")
+                        ? "bg-blue-50 text-blue-700 border-l-4 border-blue-600"
+                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                    }`}
+                  >
+                    Catégories
                   </Link>
 
                   <Link

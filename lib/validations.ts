@@ -54,6 +54,7 @@ export const createMouvementSchema = z.object({
     modality: z.enum(["ESPECES", "CHEQUE", "VIREMENT", "AUTRE"], {
         errorMap: () => ({ message: "Invalid modality" }),
     }).optional(),
+    category: z.string().optional(),
     note: z.string().optional(),
 });
 
