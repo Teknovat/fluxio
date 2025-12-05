@@ -32,6 +32,7 @@ export default function BalanceCard({ balance, onClick }: BalanceCardProps) {
       CLIENT: "Client",
       FOURNISSEUR: "Fournisseur",
       ASSOCIE: "Associé",
+      COLLABORATEUR: "Collaborateur",
       CAISSE_BANQUE: "Caisse/Banque",
       AUTRE: "Autre",
     };

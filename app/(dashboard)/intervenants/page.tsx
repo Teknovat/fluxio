@@ -73,6 +73,7 @@ export default function IntervenantsPage() {
       CLIENT: "Client",
       FOURNISSEUR: "Fournisseur",
       ASSOCIE: "Associé",
+      COLLABORATEUR: "Collaborateur",
       CAISSE_BANQUE: "Caisse/Banque",
       AUTRE: "Autre",
     };
@@ -114,11 +115,12 @@ export default function IntervenantsPage() {
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="ALL">Tous les types</option>
-            <option value="CLIENT">Client</option>
-            <option value="FOURNISSEUR">Fournisseur</option>
-            <option value="ASSOCIE">Associé</option>
-            <option value="CAISSE_BANQUE">Caisse/Banque</option>
-            <option value="AUTRE">Autre</option>
+            <option value={IntervenantType.CLIENT}>{getTypeLabel(IntervenantType.CLIENT)}</option>
+            <option value={IntervenantType.FOURNISSEUR}>{getTypeLabel(IntervenantType.FOURNISSEUR)}</option>
+            <option value={IntervenantType.ASSOCIE}>{getTypeLabel(IntervenantType.ASSOCIE)}</option>
+            <option value={IntervenantType.COLLABORATEUR}>{getTypeLabel(IntervenantType.COLLABORATEUR)}</option>
+            <option value={IntervenantType.CAISSE_BANQUE}>{getTypeLabel(IntervenantType.CAISSE_BANQUE)}</option>
+            <option value={IntervenantType.AUTRE}>{getTypeLabel(IntervenantType.AUTRE)}</option>
           </select>
         </div>
       </div>

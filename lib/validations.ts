@@ -29,14 +29,14 @@ export const updateUserSchema = z.object({
 // Intervenant management validation schemas
 export const createIntervenantSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
-    type: z.enum(["CLIENT", "FOURNISSEUR", "ASSOCIE", "CAISSE_BANQUE", "AUTRE"], {
+    type: z.enum(["CLIENT", "FOURNISSEUR", "ASSOCIE", "COLLABORATEUR", "CAISSE_BANQUE", "AUTRE"], {
         errorMap: () => ({ message: "Invalid intervenant type" }),
     }),
 });
 
 export const updateIntervenantSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters").optional(),
-    type: z.enum(["CLIENT", "FOURNISSEUR", "ASSOCIE", "CAISSE_BANQUE", "AUTRE"], {
+    type: z.enum(["CLIENT", "FOURNISSEUR", "ASSOCIE", "COLLABORATEUR", "CAISSE_BANQUE", "AUTRE"], {
         errorMap: () => ({ message: "Invalid intervenant type" }),
     }).optional(),
     active: z.boolean().optional(),
@@ -66,6 +66,22 @@ export const mouvementFiltersSchema = z.object({
     type: z.enum(["ENTREE", "SORTIE"]).optional(),
 });
 
+// Advance management validation schemas
+export const createAdvanceSchema = z.object({
+    date: z.string().datetime("Invalid date format"),
+    intervenantId: z.string().min(1, "Intervenant ID is required"),
+    amount: z.number().positive("Amount must be greater than 0"),
+    dueDate: z.string().datetime("Invalid due date format").optional(),
+    note: z.string().optional(),
+});
+
+export const reimburseAdvanceSchema = z.object({
+    date: z.string().datetime("Invalid date format"),
+    amount: z.number().positive("Amount must be greater than 0"),
+    reference: z.string().optional(),
+    note: z.string().optional(),
+});
+
 // Type exports for TypeScript inference
 export type LoginInput = z.infer<typeof loginSchema>;
 export type CreateUserInput = z.infer<typeof createUserSchema>;
@@ -74,3 +90,5 @@ export type CreateIntervenantInput = z.infer<typeof createIntervenantSchema>;
 export type UpdateIntervenantInput = z.infer<typeof updateIntervenantSchema>;
 export type CreateMouvementInput = z.infer<typeof createMouvementSchema>;
 export type MouvementFiltersInput = z.infer<typeof mouvementFiltersSchema>;
+export type CreateAdvanceInput = z.infer<typeof createAdvanceSchema>;
+export type ReimburseAdvanceInput = z.infer<typeof reimburseAdvanceSchema>;

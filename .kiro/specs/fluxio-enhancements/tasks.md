@@ -211,9 +211,9 @@
 
 ## Phase 5: Advance Management
 
-- [ ] 12. Implement advance API endpoints
+- [x] 12. Implement advance API endpoints
 
-  - [ ] 12.1 Create GET /api/advances endpoint
+  - [x] 12.1 Create GET /api/advances endpoint
 
     - Fetch all advances with reimbursements
     - Support status filter
@@ -222,7 +222,7 @@
     - Calculate remaining balance for each
     - _Requirements: 14.4, 14.9, 14.11_
 
-  - [ ] 12.2 Create POST /api/advances endpoint
+  - [x] 12.2 Create POST /api/advances endpoint
 
     - Accept date, intervenantId, amount, dueDate, note
     - Create Advance record
@@ -231,7 +231,7 @@
     - Return created advance
     - _Requirements: 14.1, 14.2, 14.12_
 
-  - [ ] 12.3 Create POST /api/advances/[id]/reimburse endpoint
+  - [x] 12.3 Create POST /api/advances/[id]/reimburse endpoint
 
     - Accept date, amount, reference, note
     - Create ENTREE Mouvement linked to advance
@@ -241,15 +241,15 @@
     - Return updated advance and reimbursement
     - _Requirements: 14.3, 14.5, 14.6, 14.7_
 
-  - [ ] 12.4 Create GET /api/advances/summary endpoint
+  - [x] 12.4 Create GET /api/advances/summary endpoint
     - Calculate total advances given
     - Calculate total reimbursed
     - Calculate total outstanding
     - _Requirements: 14.8_
 
-- [ ] 13. Create Avances page
+- [x] 13. Create Avances page
 
-  - [ ] 13.1 Create app/(dashboard)/avances/page.tsx
+  - [x] 13.1 Create app/(dashboard)/avances/page.tsx
 
     - Display summary cards (total, reimbursed, outstanding)
     - Display advances table with status, intervenant, amount, remaining, days since
@@ -261,7 +261,7 @@
     - Highlight overdue advances in red
     - _Requirements: 14.4, 14.5, 14.6, 14.7, 14.8, 14.9, 14.11, 14.12_
 
-  - [ ] 13.2 Create AdvanceForm component
+  - [x] 13.2 Create AdvanceForm component
 
     - Modal form for creating advance
     - Fields: intervenant, amount, dueDate, note
@@ -269,7 +269,7 @@
     - Submit to POST /api/advances
     - _Requirements: 14.2, 14.12_
 
-  - [ ] 13.3 Create ReimbursementForm component
+  - [x] 13.3 Create ReimbursementForm component
 
     - Modal form for reimbursing advance
     - Display advance details
@@ -278,7 +278,7 @@
     - Submit to POST /api/advances/[id]/reimburse
     - _Requirements: 14.3_
 
-  - [ ] 13.4 Create AdvanceCard component
+  - [x] 13.4 Create AdvanceCard component
 
     - Display advance details
     - Display progress bar
@@ -287,7 +287,7 @@
     - Highlight if overdue
     - _Requirements: 14.5, 14.6, 14.7, 14.11, 14.12_
 
-  - [ ] 13.5 Update intervenant detail page
+  - [x] 13.5 Update intervenant detail page
     - Add advances section
     - Display all advances for intervenant
     - Display reimbursement history

@@ -141,6 +141,7 @@ export default function IntervenantForm({
       CLIENT: "Client",
       FOURNISSEUR: "Fournisseur",
       ASSOCIE: "Associé",
+      COLLABORATEUR: "Collaborateur",
       CAISSE_BANQUE: "Caisse/Banque",
       AUTRE: "Autre",
     };
@@ -198,6 +199,7 @@ export default function IntervenantForm({
               <option value={IntervenantType.CLIENT}>{getTypeLabel(IntervenantType.CLIENT)}</option>
               <option value={IntervenantType.FOURNISSEUR}>{getTypeLabel(IntervenantType.FOURNISSEUR)}</option>
               <option value={IntervenantType.ASSOCIE}>{getTypeLabel(IntervenantType.ASSOCIE)}</option>
+              <option value={IntervenantType.COLLABORATEUR}>{getTypeLabel(IntervenantType.COLLABORATEUR)}</option>
               <option value={IntervenantType.CAISSE_BANQUE}>{getTypeLabel(IntervenantType.CAISSE_BANQUE)}</option>
               <option value={IntervenantType.AUTRE}>{getTypeLabel(IntervenantType.AUTRE)}</option>
             </select>

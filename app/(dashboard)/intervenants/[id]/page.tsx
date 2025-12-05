@@ -17,6 +17,7 @@ export default function IntervenantDetailPage() {
   const [advances, setAdvances] = useState<Advance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [expandedAdvance, setExpandedAdvance] = useState<string | null>(null);
 
   // Filter state
   const [dateFrom, setDateFrom] = useState("");
@@ -231,57 +232,117 @@ export default function IntervenantDetailPage() {
         </div>
       </div>
 
-      {/* Outstanding Advances Section */}
+      {/* Advances Section */}
       {advances.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Avances en cours</h2>
-          <div className="space-y-3">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Avances et Remboursements</h2>
+          <div className="space-y-4">
             {advances.map((advance) => {
               const totalReimbursed = advance.reimbursements?.reduce((sum, r) => sum + r.amount, 0) || 0;
               const remaining = advance.amount - totalReimbursed;
               const progress = ((advance.amount - remaining) / advance.amount) * 100;
-              const isOverdue = advance.dueDate && new Date(advance.dueDate) < new Date();
+              const isOverdue = advance.dueDate && new Date(advance.dueDate) < new Date() && remaining > 0;
 
               return (
                 <div
                   key={advance.id}
-                  className={`p-4 border rounded-lg ${isOverdue ? "border-red-300 bg-red-50" : "border-gray-200"}`}
+                  className={`border rounded-lg ${isOverdue ? "border-red-300 bg-red-50" : "border-gray-200"}`}
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <p className="font-medium text-gray-900">Avance du {formatDate(advance.createdAt)}</p>
-                      <p className="text-sm text-gray-500">
-                        Montant: {formatAmount(advance.amount)} • Restant: {formatAmount(remaining)}
-                      </p>
-                      {advance.dueDate && (
-                        <p className={`text-xs ${isOverdue ? "text-red-600 font-medium" : "text-gray-500"}`}>
-                          Échéance: {formatDate(advance.dueDate)}
-                          {isOverdue && " (En retard)"}
+                  {/* Advance Header */}
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">Avance du {formatDate(advance.createdAt)}</p>
+                        <p className="text-sm text-gray-500">
+                          Montant: {formatAmount(advance.amount)} • Remboursé: {formatAmount(totalReimbursed)} •
+                          Restant: {formatAmount(remaining)}
                         </p>
-                      )}
-                    </div>
-                    <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        advance.status === "REMBOURSE_TOTAL"
-                          ? "bg-green-100 text-green-800"
+                        {advance.dueDate && (
+                          <p className={`text-xs ${isOverdue ? "text-red-600 font-medium" : "text-gray-500"}`}>
+                            Échéance: {formatDate(advance.dueDate)}
+                            {isOverdue && " (En retard)"}
+                          </p>
+                        )}
+                      </div>
+                      <span
+                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          advance.status === "REMBOURSE_TOTAL"
+                            ? "bg-green-100 text-green-800"
+                            : advance.status === "REMBOURSE_PARTIEL"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-blue-100 text-blue-800"
+                        }`}
+                      >
+                        {advance.status === "REMBOURSE_TOTAL"
+                          ? "Remboursé"
                           : advance.status === "REMBOURSE_PARTIEL"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-blue-100 text-blue-800"
-                      }`}
-                    >
-                      {advance.status === "REMBOURSE_TOTAL"
-                        ? "Remboursé"
-                        : advance.status === "REMBOURSE_PARTIEL"
-                        ? "Partiel"
-                        : "En cours"}
-                    </span>
+                          ? "Partiel"
+                          : "En cours"}
+                      </span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                      <div
+                        className={`h-2 rounded-full ${isOverdue ? "bg-red-500" : "bg-blue-600"}`}
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+
+                    {/* Reimbursement History Toggle */}
+                    {advance.reimbursements && advance.reimbursements.length > 0 && (
+                      <button
+                        onClick={() => setExpandedAdvance(expandedAdvance === advance.id ? null : advance.id)}
+                        className="text-sm text-blue-600 hover:text-blue-800 flex items-center mt-2"
+                      >
+                        <svg
+                          className={`w-4 h-4 mr-1 transform transition-transform ${
+                            expandedAdvance === advance.id ? "rotate-90" : ""
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                        {expandedAdvance === advance.id ? "Masquer" : "Voir"} l&apos;historique des remboursements (
+                        {advance.reimbursements.length})
+                      </button>
+                    )}
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${isOverdue ? "bg-red-500" : "bg-blue-600"}`}
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
+
+                  {/* Reimbursement History */}
+                  {expandedAdvance === advance.id && advance.reimbursements && advance.reimbursements.length > 0 && (
+                    <div className="border-t border-gray-200 bg-gray-50 p-4">
+                      <h4 className="text-sm font-medium text-gray-700 mb-3">Historique des remboursements</h4>
+                      <div className="space-y-2">
+                        {advance.reimbursements
+                          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                          .map((reimbursement) => (
+                            <div
+                              key={reimbursement.id}
+                              className="flex justify-between items-center p-3 bg-white rounded border border-gray-200"
+                            >
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">{formatDate(reimbursement.date)}</p>
+                                {reimbursement.reference && (
+                                  <p className="text-xs text-gray-500">Réf: {reimbursement.reference}</p>
+                                )}
+                                {reimbursement.note && (
+                                  <p className="text-xs text-gray-600 mt-1">{reimbursement.note}</p>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-semibold text-green-600">
+                                  {formatAmount(reimbursement.amount)}
+                                </p>
+                                <p className="text-xs text-gray-500">{reimbursement.modality || "N/A"}</p>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

@@ -83,15 +83,12 @@ export async function GET(
             lastMovementDate,
         };
 
-        // Fetch outstanding advances for this intervenant
+        // Fetch all advances for this intervenant (including fully reimbursed ones)
         const advances = await prisma.advance.findMany({
             where: {
                 intervenantId,
                 intervenant: {
                     tenantId, // CRITICAL: Filter by tenant through relation
-                },
-                status: {
-                    not: 'REMBOURSE_TOTAL',
                 },
             },
             include: {

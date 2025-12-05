@@ -56,7 +56,7 @@ model Intervenant {
   tenantId   String
   tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name       String
-  type       String // CLIENT, FOURNISSEUR, ASSOCIE, CAISSE_BANQUE, AUTRE
+  type       String // CLIENT, FOURNISSEUR, ASSOCIE, COLLABORATEUR, CAISSE_BANQUE, AUTRE
   active     Boolean     @default(true)
   notes      String?
   createdAt  DateTime    @default(now())

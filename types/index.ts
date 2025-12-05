@@ -10,6 +10,7 @@ export enum IntervenantType {
     CLIENT = "CLIENT",
     FOURNISSEUR = "FOURNISSEUR",
     ASSOCIE = "ASSOCIE",
+    COLLABORATEUR = "COLLABORATEUR",
     CAISSE_BANQUE = "CAISSE_BANQUE",
     AUTRE = "AUTRE",
 }

@@ -73,6 +73,7 @@ export default function SoldesPage() {
       CLIENT: "Client",
       FOURNISSEUR: "Fournisseur",
       ASSOCIE: "Associé",
+      COLLABORATEUR: "Collaborateur",
       CAISSE_BANQUE: "Caisse/Banque",
       AUTRE: "Autre",
     };
