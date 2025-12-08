@@ -71,6 +71,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {/* Desktop Navigation Links */}
               <div className="hidden sm:ml-8 sm:flex sm:space-x-4">
                 <Link
+                  href="/dashboard"
+                  className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    isActive("/dashboard")
+                      ? "bg-blue-50 text-blue-700 border-b-2 border-blue-600"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                  }`}
+                >
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                    />
+                  </svg>
+                  Dashboard
+                </Link>
+
+                <Link
                   href="/mouvements"
                   className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                     isActive("/mouvements")
@@ -82,6 +101,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Link>
 
                 <Link
+                  href="/disbursements"
+                  className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    isActive("/disbursements")
+                      ? "bg-blue-50 text-blue-700 border-b-2 border-blue-600"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                  }`}
+                >
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
+                  </svg>
+                  Décaissements
+                </Link>
+
+                <Link
                   href="/soldes"
                   className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                     isActive("/soldes")
@@ -90,16 +128,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   }`}
                 >
                   Soldes
-                </Link>
-                <Link
-                  href="/avances"
-                  className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    isActive("/avances")
-                      ? "bg-blue-50 text-blue-700 border-b-2 border-blue-600"
-                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
-                >
-                  Avances
                 </Link>
 
                 {isAdmin && (
@@ -199,6 +227,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="sm:hidden border-t border-gray-200">
             <div className="pt-2 pb-3 space-y-1">
               <Link
+                href="/dashboard"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`block px-4 py-2 text-base font-medium ${
+                  isActive("/dashboard")
+                    ? "bg-blue-50 text-blue-700 border-l-4 border-blue-600"
+                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                }`}
+              >
+                Dashboard
+              </Link>
+
+              <Link
                 href="/mouvements"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`block px-4 py-2 text-base font-medium ${
@@ -208,6 +248,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 }`}
               >
                 Mouvements
+              </Link>
+
+              <Link
+                href="/disbursements"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`block px-4 py-2 text-base font-medium ${
+                  isActive("/disbursements")
+                    ? "bg-blue-50 text-blue-700 border-l-4 border-blue-600"
+                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                }`}
+              >
+                Décaissements
               </Link>
 
               <Link

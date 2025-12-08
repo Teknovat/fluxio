@@ -83,8 +83,8 @@ export async function GET(
             lastMovementDate,
         };
 
-        // Fetch all advances for this intervenant (including fully reimbursed ones)
-        const advances = await prisma.advance.findMany({
+        // Fetch all disbursements for this intervenant (including fully justified ones)
+        const disbursements = await prisma.disbursement.findMany({
             where: {
                 intervenantId,
                 intervenant: {
@@ -101,7 +101,12 @@ export async function GET(
                     },
                 },
                 mouvement: true,
-                reimbursements: {
+                justifications: {
+                    orderBy: {
+                        date: 'desc',
+                    },
+                },
+                returns: {
                     orderBy: {
                         date: 'desc',
                     },
@@ -112,12 +117,12 @@ export async function GET(
             },
         });
 
-        // Return balance, movements, and advances
+        // Return balance, movements, and disbursements
         return NextResponse.json(
             {
                 balance: balanceData,
                 movements,
-                advances,
+                disbursements,
             },
             { status: 200 }
         );

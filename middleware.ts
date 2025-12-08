@@ -17,11 +17,11 @@ export async function middleware(request: NextRequest) {
     const isPublicRoute = publicRoutes.some(route => pathname === route);
 
     if (isPublicRoute) {
-        // If user is already authenticated and tries to access auth pages, redirect to mouvements
+        // If user is already authenticated and tries to access auth pages, redirect to dashboard
         if (token && (pathname === '/login' || pathname === '/register' || pathname === '/tenant-select')) {
             const payload = verifyTokenEdge(token.value);
             if (payload) {
-                return NextResponse.redirect(new URL('/mouvements', request.url));
+                return NextResponse.redirect(new URL('/dashboard', request.url));
             }
         }
         // Allow access to public routes
@@ -45,8 +45,15 @@ export async function middleware(request: NextRequest) {
     const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
 
     if (isAdminRoute && payload.role !== 'ADMIN') {
-        // Non-admin user trying to access admin route - redirect to mouvements
-        return NextResponse.redirect(new URL('/mouvements', request.url));
+        // Non-admin user trying to access admin route - redirect to dashboard
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+
+    // Backward compatibility redirects for old /avances routes
+    if (pathname.startsWith('/avances')) {
+        console.warn('[DEPRECATED] /avances route is deprecated. Use /disbursements instead.');
+        const newPath = pathname.replace('/avances', '/disbursements');
+        return NextResponse.redirect(new URL(newPath, request.url));
     }
 
     // Allow access to the route

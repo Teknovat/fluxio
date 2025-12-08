@@ -3,9 +3,8 @@ import {
     Alert,
     AlertType,
     Settings,
-    AdvanceStatus,
+    DisbursementStatus,
     Modality,
-    MouvementType,
 } from "@/types";
 import { calculateAllBalances, calculateTheoreticalCashBalance } from "./calculations";
 
@@ -116,15 +115,15 @@ async function checkLowCash(
 }
 
 /**
- * Check for overdue advances and create alerts
- * Creates alerts for advances that are past their due date and not fully reimbursed
+ * Check for overdue disbursements and create alerts
+ * Creates alerts for disbursements that are past their due date and not fully justified
  * 
  * @param prisma - Prisma client instance
  * @param tenantId - The tenant ID to check
  * @param settings - Settings (for currency formatting)
  * @returns Array of created alerts
  */
-async function checkOverdueAdvances(
+async function checkOverdueDisbursements(
     prisma: PrismaClient,
     tenantId: string,
     settings: Settings
@@ -133,12 +132,12 @@ async function checkOverdueAdvances(
 
     const now = new Date();
 
-    // Find all overdue advances that are not fully reimbursed
-    const overdueAdvances = await prisma.advance.findMany({
+    // Find all overdue disbursements that are not fully justified
+    const overdueDisbursements = await prisma.disbursement.findMany({
         where: {
             tenantId,
             status: {
-                not: AdvanceStatus.REMBOURSE_TOTAL,
+                not: DisbursementStatus.JUSTIFIED,
             },
             dueDate: {
                 lt: now,
@@ -149,30 +148,153 @@ async function checkOverdueAdvances(
         },
     });
 
-    // Create alert for each overdue advance
-    for (const advance of overdueAdvances) {
+    // Create alert for each overdue disbursement
+    for (const disbursement of overdueDisbursements) {
         // Check if alert already exists and is not dismissed
         const existingAlert = await prisma.alert.findFirst({
             where: {
                 tenantId,
-                type: AlertType.OVERDUE_ADVANCE,
-                relatedId: advance.id,
+                type: AlertType.OVERDUE_DISBURSEMENT,
+                relatedId: disbursement.id,
                 dismissed: false,
             },
         });
 
         // Only create alert if one doesn't already exist
         if (!existingAlert) {
-            const dueDate = advance.dueDate!;
+            const dueDate = disbursement.dueDate!;
             const formattedDate = dueDate.toLocaleDateString("fr-FR");
 
             alerts.push({
                 tenantId,
-                type: AlertType.OVERDUE_ADVANCE,
-                title: `Avance en retard: ${advance.intervenant.name}`,
-                message: `Avance de ${advance.amount.toFixed(2)} ${settings.currency} en retard depuis le ${formattedDate}`,
+                type: AlertType.OVERDUE_DISBURSEMENT,
+                title: `Décaissement en retard: ${disbursement.intervenant.name}`,
+                message: `Décaissement de ${disbursement.initialAmount.toFixed(2)} ${settings.currency} en retard depuis le ${formattedDate}`,
                 severity: "WARNING",
-                relatedId: advance.id,
+                relatedId: disbursement.id,
+                dismissed: false,
+            });
+        }
+    }
+
+    return alerts;
+}
+
+/**
+ * Check for disbursements open for more than 30 days and create alerts
+ * Creates alerts for disbursements that have been open for an extended period
+ * 
+ * @param prisma - Prisma client instance
+ * @param tenantId - The tenant ID to check
+ * @param settings - Settings (for currency formatting)
+ * @returns Array of created alerts
+ */
+async function checkLongOpenDisbursements(
+    prisma: PrismaClient,
+    tenantId: string,
+    settings: Settings
+): Promise<Partial<Alert>[]> {
+    const alerts: Partial<Alert>[] = [];
+
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // Find all disbursements open for more than 30 days
+    const longOpenDisbursements = await prisma.disbursement.findMany({
+        where: {
+            tenantId,
+            status: {
+                not: DisbursementStatus.JUSTIFIED,
+            },
+            createdAt: {
+                lt: thirtyDaysAgo,
+            },
+        },
+        include: {
+            intervenant: true,
+        },
+    });
+
+    // Create alert for each long-open disbursement
+    for (const disbursement of longOpenDisbursements) {
+        // Check if alert already exists and is not dismissed
+        const existingAlert = await prisma.alert.findFirst({
+            where: {
+                tenantId,
+                type: AlertType.LONG_OPEN_DISBURSEMENT,
+                relatedId: disbursement.id,
+                dismissed: false,
+            },
+        });
+
+        // Only create alert if one doesn't already exist
+        if (!existingAlert) {
+            const daysOpen = Math.ceil((now.getTime() - disbursement.createdAt.getTime()) / (1000 * 60 * 60 * 24));
+
+            alerts.push({
+                tenantId,
+                type: AlertType.LONG_OPEN_DISBURSEMENT,
+                title: `Décaissement ouvert depuis longtemps: ${disbursement.intervenant.name}`,
+                message: `Décaissement de ${disbursement.remainingAmount.toFixed(2)} ${settings.currency} ouvert depuis ${daysOpen} jours`,
+                severity: "WARNING",
+                relatedId: disbursement.id,
+                dismissed: false,
+            });
+        }
+    }
+
+    return alerts;
+}
+
+/**
+ * Check if total outstanding disbursements exceed threshold and create alert
+ * Creates an alert when the sum of all outstanding disbursements is too high
+ * 
+ * @param prisma - Prisma client instance
+ * @param tenantId - The tenant ID to check
+ * @param settings - Settings containing the outstanding threshold
+ * @returns Array of created alerts (0 or 1)
+ */
+async function checkHighOutstandingDisbursements(
+    prisma: PrismaClient,
+    tenantId: string,
+    settings: Settings
+): Promise<Partial<Alert>[]> {
+    const alerts: Partial<Alert>[] = [];
+
+    // Calculate total outstanding disbursements
+    const disbursements = await prisma.disbursement.findMany({
+        where: {
+            tenantId,
+            status: {
+                not: DisbursementStatus.JUSTIFIED,
+            },
+        },
+    });
+
+    const totalOutstanding = disbursements.reduce((sum, d) => sum + d.remainingAmount, 0);
+
+    // Check if total outstanding exceeds threshold (default to 10000 if not set)
+    const threshold = (settings as any).disbursementOutstandingThreshold || 10000;
+
+    if (totalOutstanding > threshold) {
+        // Check if alert already exists and is not dismissed
+        const existingAlert = await prisma.alert.findFirst({
+            where: {
+                tenantId,
+                type: AlertType.HIGH_OUTSTANDING_DISBURSEMENTS,
+                dismissed: false,
+            },
+        });
+
+        // Only create alert if one doesn't already exist
+        if (!existingAlert) {
+            alerts.push({
+                tenantId,
+                type: AlertType.HIGH_OUTSTANDING_DISBURSEMENTS,
+                title: "Décaissements en cours élevés",
+                message: `Le total des décaissements en cours (${totalOutstanding.toFixed(2)} ${settings.currency}) dépasse le seuil de ${threshold.toFixed(2)} ${settings.currency}`,
+                severity: "WARNING",
                 dismissed: false,
             });
         }
@@ -268,10 +390,12 @@ export async function checkAndCreateAlerts(
     // Run all alert checks
     const debtAlerts = await checkDebtThresholds(prisma, tenantId, settings as Settings);
     const cashAlerts = await checkLowCash(prisma, tenantId, settings as Settings);
-    const advanceAlerts = await checkOverdueAdvances(prisma, tenantId, settings as Settings);
+    const disbursementAlerts = await checkOverdueDisbursements(prisma, tenantId, settings as Settings);
+    const longOpenAlerts = await checkLongOpenDisbursements(prisma, tenantId, settings as Settings);
+    const highOutstandingAlerts = await checkHighOutstandingDisbursements(prisma, tenantId, settings as Settings);
     const reconciliationAlerts = await checkReconciliationGap(prisma, tenantId, settings as Settings);
 
-    allAlerts.push(...debtAlerts, ...cashAlerts, ...advanceAlerts, ...reconciliationAlerts);
+    allAlerts.push(...debtAlerts, ...cashAlerts, ...disbursementAlerts, ...longOpenAlerts, ...highOutstandingAlerts, ...reconciliationAlerts);
 
     // Create all alerts in the database
     const createdAlerts: Alert[] = [];

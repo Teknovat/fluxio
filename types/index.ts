@@ -32,21 +32,51 @@ export enum MovementCategory {
     ACHATS_STOCK = "ACHATS_STOCK",
     FRAIS_GENERAUX = "FRAIS_GENERAUX",
     AVANCES_ASSOCIES = "AVANCES_ASSOCIES",
+    REMBOURSEMENT_ASSOCIES = "REMBOURSEMENT_ASSOCIES",
     VENTES = "VENTES",
     CHARGES_FIXES = "CHARGES_FIXES",
     AUTRES = "AUTRES",
 }
 
+/**
+ * @deprecated Use DisbursementStatus instead. This enum is kept for backward compatibility during migration.
+ */
 export enum AdvanceStatus {
     EN_COURS = "EN_COURS",
     REMBOURSE_PARTIEL = "REMBOURSE_PARTIEL",
     REMBOURSE_TOTAL = "REMBOURSE_TOTAL",
 }
 
+export enum DisbursementStatus {
+    OPEN = "OPEN",
+    PARTIALLY_JUSTIFIED = "PARTIALLY_JUSTIFIED",
+    JUSTIFIED = "JUSTIFIED",
+}
+
+export enum DisbursementCategory {
+    STOCK_PURCHASE = "STOCK_PURCHASE",
+    BANK_DEPOSIT = "BANK_DEPOSIT",
+    SALARY_ADVANCE = "SALARY_ADVANCE",
+    GENERAL_EXPENSE = "GENERAL_EXPENSE",
+    OTHER = "OTHER",
+}
+
+export enum JustificationCategory {
+    STOCK_PURCHASE = "STOCK_PURCHASE",
+    BANK_DEPOSIT = "BANK_DEPOSIT",
+    SALARY = "SALARY",
+    TRANSPORT = "TRANSPORT",
+    SUPPLIES = "SUPPLIES",
+    UTILITIES = "UTILITIES",
+    OTHER = "OTHER",
+}
+
 export enum AlertType {
     DEBT_THRESHOLD = "DEBT_THRESHOLD",
     LOW_CASH = "LOW_CASH",
-    OVERDUE_ADVANCE = "OVERDUE_ADVANCE",
+    OVERDUE_DISBURSEMENT = "OVERDUE_DISBURSEMENT",
+    LONG_OPEN_DISBURSEMENT = "LONG_OPEN_DISBURSEMENT",
+    HIGH_OUTSTANDING_DISBURSEMENTS = "HIGH_OUTSTANDING_DISBURSEMENTS",
     RECONCILIATION_GAP = "RECONCILIATION_GAP",
 }
 
@@ -85,6 +115,9 @@ export interface Intervenant {
     type: IntervenantType;
     active: boolean;
     notes?: string;
+    /** @deprecated Use disbursements instead */
+    advances?: Advance[];
+    disbursements?: Disbursement[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -103,9 +136,9 @@ export interface Mouvement {
     modality?: Modality;
     category?: MovementCategory;
     note?: string;
-    isAdvance: boolean;
-    advanceId?: string;
-    advance?: Advance;
+    isDisbursement: boolean;
+    disbursementId?: string;
+    disbursement?: Disbursement;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -125,7 +158,9 @@ export interface MouvementFilters {
     type?: MouvementType;
 }
 
-// Advance interface
+/**
+ * @deprecated Use Disbursement interface instead. This interface is kept for backward compatibility during migration.
+ */
 export interface Advance {
     id: string;
     tenantId: string;
@@ -137,6 +172,42 @@ export interface Advance {
     dueDate?: Date;
     status: AdvanceStatus;
     reimbursements?: Mouvement[];
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+// Disbursement interface
+export interface Disbursement {
+    id: string;
+    tenantId: string;
+    mouvementId: string;
+    mouvement?: Mouvement;
+    intervenantId: string;
+    intervenant?: Intervenant;
+    initialAmount: number;
+    remainingAmount: number;
+    dueDate?: Date;
+    status: DisbursementStatus;
+    category?: DisbursementCategory;
+    justifications?: Justification[];
+    returns?: Mouvement[];
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+// Justification interface
+export interface Justification {
+    id: string;
+    tenantId: string;
+    disbursementId: string;
+    disbursement?: Disbursement;
+    date: Date;
+    amount: number;
+    category: JustificationCategory;
+    reference?: string;
+    note?: string;
+    attachments?: string;
+    createdBy: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -237,4 +308,16 @@ export interface DashboardData {
     alerts: Alert[];
     balanceTrend: { date: string; balance: number }[];
     todayMovements: { count: number; total: number };
+}
+
+// CashDashboardData interface for cash dashboard page
+export interface CashDashboardData {
+    currentBalance: number;
+    todayInflows: number;
+    todayOutflows: number;
+    netChangeToday: number;
+    recentMovements: Mouvement[];
+    balanceTrend: { date: string; balance: number }[];
+    outstandingDisbursements: number;
+    alerts: Alert[];
 }

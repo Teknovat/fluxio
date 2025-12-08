@@ -12,21 +12,21 @@ datasource db {
 
 // Tenant model for multi-tenancy support
 model Tenant {
-  id            String   @id @default(cuid())
-  name          String   // Company name
-  slug          String   @unique // URL-friendly identifier
-  subdomain     String?  @unique // Optional subdomain
-  active        Boolean  @default(true)
-  logo          String?
-  primaryColor  String?  @default("#3b82f6")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
+  id           String   @id @default(cuid())
+  name         String // Company name
+  slug         String   @unique // URL-friendly identifier
+  subdomain    String?  @unique // Optional subdomain
+  active       Boolean  @default(true)
+  logo         String?
+  primaryColor String?  @default("#3b82f6")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
   // Relations
-  users         User[]
-  intervenants  Intervenant[]
-  mouvements    Mouvement[]
-  
+  users        User[]
+  intervenants Intervenant[]
+  mouvements   Mouvement[]
+
   @@index([slug])
   @@index([active])
 }
@@ -44,7 +44,7 @@ model User {
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
   reconciliations CashReconciliation[]
-  
+
   @@unique([tenantId, email]) // Email unique per tenant
   @@index([tenantId])
   @@index([email])
@@ -52,42 +52,42 @@ model User {
 
 // Intervenant model with IntervenantType enum (using String for SQLite compatibility)
 model Intervenant {
-  id         String      @id @default(cuid())
-  tenantId   String
-  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  name       String
-  type       String // CLIENT, FOURNISSEUR, ASSOCIE, COLLABORATEUR, CAISSE_BANQUE, AUTRE
-  active     Boolean     @default(true)
-  notes      String?
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  mouvements Mouvement[]
-  advances   Advance[]
-  
+  id            String         @id @default(cuid())
+  tenantId      String
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name          String
+  type          String // CLIENT, FOURNISSEUR, ASSOCIE, COLLABORATEUR, CAISSE_BANQUE, AUTRE
+  active        Boolean        @default(true)
+  notes         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  mouvements    Mouvement[]
+  disbursements Disbursement[] // Renamed from advances
+
   @@index([tenantId])
   @@index([tenantId, type])
 }
 
 // Mouvement model with MouvementType and Modality enums (using String for SQLite compatibility)
 model Mouvement {
-  id            String      @id @default(cuid())
-  tenantId      String
-  tenant        Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  date          DateTime
-  intervenantId String
-  intervenant   Intervenant @relation(fields: [intervenantId], references: [id], onDelete: Restrict)
-  type          String // ENTREE or SORTIE
-  amount        Float
-  reference     String?
-  modality      String? // ESPECES, CHEQUE, VIREMENT, AUTRE
-  category      String? // SALAIRES, ACHATS_STOCK, FRAIS_GENERAUX, AVANCES_ASSOCIES, VENTES, CHARGES_FIXES, AUTRES
-  note          String?
-  isAdvance     Boolean     @default(false)
-  advanceId     String?
-  advance       Advance?    @relation("AdvanceReimbursements", fields: [advanceId], references: [id])
-  linkedAdvance Advance?    @relation("AdvanceMovement")
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id                 String        @id @default(cuid())
+  tenantId           String
+  tenant             Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  date               DateTime
+  intervenantId      String
+  intervenant        Intervenant   @relation(fields: [intervenantId], references: [id], onDelete: Restrict)
+  type               String // ENTREE or SORTIE
+  amount             Float
+  reference          String?
+  modality           String? // ESPECES, CHEQUE, VIREMENT, AUTRE
+  category           String? // SALAIRES, ACHATS_STOCK, FRAIS_GENERAUX, AVANCES_ASSOCIES, VENTES, CHARGES_FIXES, AUTRES
+  note               String?
+  isDisbursement     Boolean       @default(false) // Renamed from isAdvance
+  disbursementId     String? // Renamed from advanceId
+  disbursement       Disbursement? @relation("DisbursementReturns", fields: [disbursementId], references: [id])
+  linkedDisbursement Disbursement? @relation("DisbursementMovement")
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   @@index([tenantId])
   @@index([tenantId, date])
@@ -97,23 +97,26 @@ model Mouvement {
   @@index([date])
   @@index([intervenantId])
   @@index([type])
-  @@index([advanceId])
+  @@index([disbursementId])
 }
 
-// Advance model for tracking advances given to intervenants
-model Advance {
-  id             String      @id @default(cuid())
-  tenantId       String
-  mouvementId    String      @unique
-  mouvement      Mouvement   @relation("AdvanceMovement", fields: [mouvementId], references: [id])
-  intervenantId  String
-  intervenant    Intervenant @relation(fields: [intervenantId], references: [id], onDelete: Restrict)
-  amount         Float
-  dueDate        DateTime?
-  status         String      @default("EN_COURS") // EN_COURS, REMBOURSE_PARTIEL, REMBOURSE_TOTAL
-  reimbursements Mouvement[] @relation("AdvanceReimbursements")
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+// Disbursement model for tracking cash outflows that require justification (replaces Advance)
+model Disbursement {
+  id              String          @id @default(cuid())
+  tenantId        String
+  mouvementId     String          @unique
+  mouvement       Mouvement       @relation("DisbursementMovement", fields: [mouvementId], references: [id])
+  intervenantId   String
+  intervenant     Intervenant     @relation(fields: [intervenantId], references: [id], onDelete: Restrict)
+  initialAmount   Float
+  remainingAmount Float
+  dueDate         DateTime?
+  status          String          @default("OPEN") // OPEN, PARTIALLY_JUSTIFIED, JUSTIFIED
+  category        String? // STOCK_PURCHASE, BANK_DEPOSIT, SALARY_ADVANCE, GENERAL_EXPENSE, OTHER
+  justifications  Justification[]
+  returns         Mouvement[]     @relation("DisbursementReturns")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
   @@index([tenantId])
   @@index([tenantId, intervenantId])
@@ -121,6 +124,27 @@ model Advance {
   @@index([intervenantId])
   @@index([status])
   @@index([dueDate])
+}
+
+// Justification model for documenting how disbursed funds were used (does NOT create cash movements)
+model Justification {
+  id             String       @id @default(cuid())
+  tenantId       String
+  disbursementId String
+  disbursement   Disbursement @relation(fields: [disbursementId], references: [id], onDelete: Cascade)
+  date           DateTime
+  amount         Float
+  category       String // Must match or be subcategory of disbursement category
+  reference      String?
+  note           String?
+  attachments    String? // JSON array of file paths (future)
+  createdBy      String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([tenantId])
+  @@index([disbursementId])
+  @@index([date])
 }
 
 // CashReconciliation model for tracking cash counts
@@ -145,7 +169,7 @@ model CashReconciliation {
 model Alert {
   id          String    @id @default(cuid())
   tenantId    String
-  type        String // DEBT_THRESHOLD, LOW_CASH, OVERDUE_ADVANCE, RECONCILIATION_GAP
+  type        String // DEBT_THRESHOLD, LOW_CASH, OVERDUE_DISBURSEMENT, LONG_OPEN_DISBURSEMENT, HIGH_OUTSTANDING_DISBURSEMENTS, RECONCILIATION_GAP
   title       String
   message     String
   severity    String // INFO, WARNING, ERROR
@@ -185,8 +209,8 @@ model Settings {
 model CustomCategory {
   id        String   @id @default(cuid())
   tenantId  String
-  code      String   // Unique code for the category (e.g., SALAIRES, CUSTOM_1)
-  label     String   // Display label (e.g., "Salaires", "Marketing")
+  code      String // Unique code for the category (e.g., SALAIRES, CUSTOM_1)
+  label     String // Display label (e.g., "Salaires", "Marketing")
   color     String   @default("#6B7280") // Hex color code for visual distinction
   active    Boolean  @default(true)
   isDefault Boolean  @default(false) // Whether this is a default system category

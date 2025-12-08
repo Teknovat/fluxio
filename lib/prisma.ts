@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 
-// Prisma client with CustomCategory support
+// Prisma client with Disbursement and CustomCategory support
 const globalForPrisma = globalThis as unknown as {
     prisma: PrismaClient | undefined;
 };

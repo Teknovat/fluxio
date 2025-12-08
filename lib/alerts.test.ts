@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { checkAndCreateAlerts } from "./alerts";
 import {
     AlertType,
-    AdvanceStatus,
+    DisbursementStatus,
     MouvementType,
     Modality,
     IntervenantType,
@@ -72,7 +72,8 @@ describe("Alert Utilities", () => {
         // Clean up test data
         await prisma.alert.deleteMany({ where: { tenantId: testTenantId } });
         await prisma.cashReconciliation.deleteMany({ where: { tenantId: testTenantId } });
-        await prisma.advance.deleteMany({ where: { tenantId: testTenantId } });
+        await prisma.justification.deleteMany({ where: { tenantId: testTenantId } });
+        await prisma.disbursement.deleteMany({ where: { tenantId: testTenantId } });
         await prisma.mouvement.deleteMany({ where: { tenantId: testTenantId } });
         await prisma.intervenant.deleteMany({ where: { tenantId: testTenantId } });
         await prisma.settings.deleteMany({ where: { tenantId: testTenantId } });
@@ -90,7 +91,7 @@ describe("Alert Utilities", () => {
                 type: MouvementType.SORTIE,
                 amount: 15000,
                 modality: Modality.ESPECES,
-                isAdvance: false,
+                isDisbursement: false,
             },
         });
 
@@ -113,7 +114,7 @@ describe("Alert Utilities", () => {
                 type: MouvementType.ENTREE,
                 amount: 3000,
                 modality: Modality.ESPECES,
-                isAdvance: false,
+                isDisbursement: false,
             },
         });
 
@@ -125,7 +126,7 @@ describe("Alert Utilities", () => {
                 type: MouvementType.SORTIE,
                 amount: 1000,
                 modality: Modality.ESPECES,
-                isAdvance: false,
+                isDisbursement: false,
             },
         });
 
@@ -136,8 +137,8 @@ describe("Alert Utilities", () => {
         expect(cashAlert?.severity).toBe("ERROR");
     });
 
-    it("should create overdue advance alert", async () => {
-        // Create an overdue advance
+    it("should create overdue disbursement alert", async () => {
+        // Create an overdue disbursement
         const pastDate = new Date();
         pastDate.setDate(pastDate.getDate() - 10);
 
@@ -149,26 +150,97 @@ describe("Alert Utilities", () => {
                 type: MouvementType.SORTIE,
                 amount: 5000,
                 modality: Modality.ESPECES,
-                isAdvance: true,
+                isDisbursement: true,
             },
         });
 
-        await prisma.advance.create({
+        await prisma.disbursement.create({
             data: {
                 tenantId: testTenantId,
                 mouvementId: mouvement.id,
                 intervenantId: testIntervenantId,
-                amount: 5000,
+                initialAmount: 5000,
+                remainingAmount: 5000,
                 dueDate: pastDate,
-                status: AdvanceStatus.EN_COURS,
+                status: DisbursementStatus.OPEN,
             },
         });
 
         const alerts = await checkAndCreateAlerts(prisma, testTenantId);
 
-        const advanceAlert = alerts.find((a) => a.type === AlertType.OVERDUE_ADVANCE);
-        expect(advanceAlert).toBeDefined();
-        expect(advanceAlert?.severity).toBe("WARNING");
+        const disbursementAlert = alerts.find((a) => a.type === AlertType.OVERDUE_DISBURSEMENT);
+        expect(disbursementAlert).toBeDefined();
+        expect(disbursementAlert?.severity).toBe("WARNING");
+    });
+
+    it("should create long open disbursement alert for disbursements open > 30 days", async () => {
+        // Create a disbursement from 35 days ago
+        const oldDate = new Date();
+        oldDate.setDate(oldDate.getDate() - 35);
+
+        const mouvement = await prisma.mouvement.create({
+            data: {
+                tenantId: testTenantId,
+                date: oldDate,
+                intervenantId: testIntervenantId,
+                type: MouvementType.SORTIE,
+                amount: 3000,
+                modality: Modality.ESPECES,
+                isDisbursement: true,
+            },
+        });
+
+        await prisma.disbursement.create({
+            data: {
+                tenantId: testTenantId,
+                mouvementId: mouvement.id,
+                intervenantId: testIntervenantId,
+                initialAmount: 3000,
+                remainingAmount: 3000,
+                status: DisbursementStatus.OPEN,
+                createdAt: oldDate,
+            },
+        });
+
+        const alerts = await checkAndCreateAlerts(prisma, testTenantId);
+
+        const longOpenAlert = alerts.find((a) => a.type === AlertType.LONG_OPEN_DISBURSEMENT);
+        expect(longOpenAlert).toBeDefined();
+        expect(longOpenAlert?.severity).toBe("WARNING");
+    });
+
+    it("should create high outstanding disbursements alert when total exceeds threshold", async () => {
+        // Create multiple disbursements totaling > 10000
+        for (let i = 0; i < 3; i++) {
+            const mouvement = await prisma.mouvement.create({
+                data: {
+                    tenantId: testTenantId,
+                    date: new Date(),
+                    intervenantId: testIntervenantId,
+                    type: MouvementType.SORTIE,
+                    amount: 4000,
+                    modality: Modality.ESPECES,
+                    isDisbursement: true,
+                },
+            });
+
+            await prisma.disbursement.create({
+                data: {
+                    tenantId: testTenantId,
+                    mouvementId: mouvement.id,
+                    intervenantId: testIntervenantId,
+                    initialAmount: 4000,
+                    remainingAmount: 4000,
+                    status: DisbursementStatus.OPEN,
+                },
+            });
+        }
+
+        const alerts = await checkAndCreateAlerts(prisma, testTenantId);
+
+        const highOutstandingAlert = alerts.find((a) => a.type === AlertType.HIGH_OUTSTANDING_DISBURSEMENTS);
+        expect(highOutstandingAlert).toBeDefined();
+        expect(highOutstandingAlert?.severity).toBe("WARNING");
     });
 
     it("should create reconciliation gap alert when gap exceeds threshold", async () => {
@@ -207,7 +279,7 @@ describe("Alert Utilities", () => {
                 type: MouvementType.SORTIE,
                 amount: 15000,
                 modality: Modality.ESPECES,
-                isAdvance: false,
+                isDisbursement: false,
             },
         });
 
@@ -226,7 +298,7 @@ describe("Alert Utilities", () => {
                 type: MouvementType.SORTIE,
                 amount: 15000,
                 modality: Modality.ESPECES,
-                isAdvance: false,
+                isDisbursement: false,
             },
         });
 
