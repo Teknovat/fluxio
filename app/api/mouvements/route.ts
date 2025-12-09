@@ -25,6 +25,11 @@ export async function GET(request: NextRequest) {
         const modalities = searchParams.getAll('modality');
         const category = searchParams.get('category');
 
+        // Pagination parameters
+        const page = parseInt(searchParams.get('page') || '1');
+        const limit = parseInt(searchParams.get('limit') || '25');
+        const skip = (page - 1) * limit;
+
         // Build Prisma query with filters - ALWAYS filter by tenantId
         const where: any = {
             tenantId, // CRITICAL: Filter by tenant
@@ -68,7 +73,10 @@ export async function GET(request: NextRequest) {
             where.category = category;
         }
 
-        // Fetch mouvements with intervenant data
+        // Get total count for pagination
+        const totalCount = await prisma.mouvement.count({ where });
+
+        // Fetch mouvements with intervenant data and pagination
         const mouvements = await prisma.mouvement.findMany({
             where,
             include: {
@@ -84,13 +92,23 @@ export async function GET(request: NextRequest) {
             orderBy: {
                 date: 'desc',
             },
+            skip,
+            take: limit,
         });
 
-        // Calculate summary
+        // Calculate summary from ALL matching mouvements (not just current page)
+        const allMouvements = await prisma.mouvement.findMany({
+            where,
+            select: {
+                type: true,
+                amount: true,
+            },
+        });
+
         let totalEntree = 0;
         let totalSortie = 0;
 
-        mouvements.forEach((mouvement) => {
+        allMouvements.forEach((mouvement) => {
             if (mouvement.type === 'ENTREE') {
                 totalEntree += mouvement.amount;
             } else if (mouvement.type === 'SORTIE') {
@@ -100,7 +118,7 @@ export async function GET(request: NextRequest) {
 
         const solde = totalEntree - totalSortie;
 
-        // Return mouvements and summary
+        // Return mouvements, summary, and pagination info
         return NextResponse.json(
             {
                 mouvements,
@@ -108,6 +126,12 @@ export async function GET(request: NextRequest) {
                     totalEntree,
                     totalSortie,
                     solde,
+                },
+                pagination: {
+                    page,
+                    limit,
+                    totalCount,
+                    totalPages: Math.ceil(totalCount / limit),
                 },
             },
             { status: 200 }

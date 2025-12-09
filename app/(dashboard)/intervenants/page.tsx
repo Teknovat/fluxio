@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { Intervenant, IntervenantType } from "@/types";
 import Toast from "@/components/Toast";
 import IntervenantForm from "@/components/IntervenantForm";
+import Pagination from "@/components/Pagination";
 
 export default function IntervenantsPage() {
   const [intervenants, setIntervenants] = useState<Intervenant[]>([]);
-  const [filteredIntervenants, setFilteredIntervenants] = useState<Intervenant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<{ role: string } | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -16,6 +16,12 @@ export default function IntervenantsPage() {
 
   // Filter state
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>("ALL");
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   // Fetch user data from localStorage
   useEffect(() => {
@@ -29,27 +35,28 @@ export default function IntervenantsPage() {
     }
   }, []);
 
-  // Fetch intervenants on mount
+  // Fetch intervenants when filters or pagination change
   useEffect(() => {
     fetchIntervenants();
-  }, []);
-
-  // Apply type filter
-  useEffect(() => {
-    if (selectedTypeFilter === "ALL") {
-      setFilteredIntervenants(intervenants);
-    } else {
-      setFilteredIntervenants(intervenants.filter((i) => i.type === selectedTypeFilter));
-    }
-  }, [selectedTypeFilter, intervenants]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTypeFilter, currentPage, itemsPerPage]);
 
   const fetchIntervenants = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/intervenants");
+      const params = new URLSearchParams();
+      params.append("page", currentPage.toString());
+      params.append("limit", itemsPerPage.toString());
+      if (selectedTypeFilter !== "ALL") {
+        params.append("type", selectedTypeFilter);
+      }
+
+      const response = await fetch(`/api/intervenants?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
-        setIntervenants(data);
+        setIntervenants(data.intervenants);
+        setTotalCount(data.pagination.totalCount);
+        setTotalPages(data.pagination.totalPages);
       }
     } catch (error) {
       console.error("Error fetching intervenants:", error);
@@ -78,6 +85,21 @@ export default function IntervenantsPage() {
       AUTRE: "Autre",
     };
     return labels[type];
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+  };
+
+  const handleTypeFilterChange = (type: string) => {
+    setSelectedTypeFilter(type);
+    setCurrentPage(1);
   };
 
   return (
@@ -111,7 +133,7 @@ export default function IntervenantsPage() {
           <select
             id="typeFilter"
             value={selectedTypeFilter}
-            onChange={(e) => setSelectedTypeFilter(e.target.value)}
+            onChange={(e) => handleTypeFilterChange(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="ALL">Tous les types</option>
@@ -131,7 +153,7 @@ export default function IntervenantsPage() {
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
-        ) : filteredIntervenants.length === 0 ? (
+        ) : intervenants.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500">Aucun intervenant trouvé</p>
           </div>
@@ -157,7 +179,7 @@ export default function IntervenantsPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredIntervenants.map((intervenant) => (
+                  {intervenants.map((intervenant) => (
                     <tr key={intervenant.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {intervenant.name}
@@ -190,7 +212,7 @@ export default function IntervenantsPage() {
 
             {/* Mobile Cards */}
             <div className="md:hidden divide-y divide-gray-200">
-              {filteredIntervenants.map((intervenant) => (
+              {intervenants.map((intervenant) => (
                 <div key={intervenant.id} className="p-4 space-y-2">
                   <div className="flex justify-between items-start">
                     <div>
@@ -217,6 +239,18 @@ export default function IntervenantsPage() {
               ))}
             </div>
           </>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && intervenants.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalCount}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleItemsPerPageChange}
+          />
         )}
       </div>
 

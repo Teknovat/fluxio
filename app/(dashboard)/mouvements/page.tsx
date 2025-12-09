@@ -5,6 +5,7 @@ import { Mouvement, Intervenant, MouvementType, MouvementSummary, MovementCatego
 import MouvementForm from "@/components/MouvementForm";
 import Toast from "@/components/Toast";
 import CurrencySelector from "@/components/CurrencySelector";
+import Pagination from "@/components/Pagination";
 import { formatAmount as formatCurrency } from "@/lib/currency";
 
 interface Category {
@@ -49,6 +50,12 @@ export default function MouvementsPage() {
   const [showModalityDropdown, setShowModalityDropdown] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<"ALL" | MovementCategory>("ALL");
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
   // Fetch user data from localStorage
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -80,18 +87,27 @@ export default function MouvementsPage() {
     fetchCategories();
   }, []);
 
-  // Fetch mouvements when filters change
+  // Fetch mouvements when filters or pagination change
   useEffect(() => {
     fetchMouvements();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateFrom, dateTo, selectedIntervenantId, selectedType, selectedModalities, selectedCategory]);
+  }, [
+    dateFrom,
+    dateTo,
+    selectedIntervenantId,
+    selectedType,
+    selectedModalities,
+    selectedCategory,
+    currentPage,
+    itemsPerPage,
+  ]);
 
   const fetchIntervenants = async () => {
     try {
       const response = await fetch("/api/intervenants");
       if (response.ok) {
         const data = await response.json();
-        setIntervenants(data);
+        setIntervenants(data.intervenants);
       }
     } catch (error) {
       console.error("Error fetching intervenants:", error);
@@ -122,12 +138,16 @@ export default function MouvementsPage() {
         selectedModalities.forEach((modality) => params.append("modality", modality));
       }
       if (selectedCategory !== "ALL") params.append("category", selectedCategory);
+      params.append("page", currentPage.toString());
+      params.append("limit", itemsPerPage.toString());
 
       const response = await fetch(`/api/mouvements?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
         setMouvements(data.mouvements);
         setSummary(data.summary);
+        setTotalCount(data.pagination.totalCount);
+        setTotalPages(data.pagination.totalPages);
       }
     } catch (error) {
       console.error("Error fetching mouvements:", error);
@@ -143,6 +163,17 @@ export default function MouvementsPage() {
     setSelectedType("ALL");
     setSelectedModalities([]);
     setSelectedCategory("ALL");
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
   };
 
   const toggleModality = (modality: string) => {
@@ -645,6 +676,18 @@ export default function MouvementsPage() {
               ))}
             </div>
           </>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && mouvements.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalCount}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleItemsPerPageChange}
+          />
         )}
       </div>
 

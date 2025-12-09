@@ -21,6 +21,11 @@ export async function GET(request: NextRequest) {
         const typeParam = searchParams.get('type');
         const activeParam = searchParams.get('active');
 
+        // Pagination parameters
+        const page = parseInt(searchParams.get('page') || '1');
+        const limit = parseInt(searchParams.get('limit') || '25');
+        const skip = (page - 1) * limit;
+
         // Build filter object - ALWAYS filter by tenantId
         const where: any = {
             tenantId, // CRITICAL: Filter by tenant
@@ -36,15 +41,31 @@ export async function GET(request: NextRequest) {
             where.active = activeParam === 'true';
         }
 
-        // Fetch filtered intervenants from database
+        // Get total count for pagination
+        const totalCount = await prisma.intervenant.count({ where });
+
+        // Fetch filtered intervenants from database with pagination
         const intervenants = await prisma.intervenant.findMany({
             where,
             orderBy: {
                 name: 'asc',
             },
+            skip,
+            take: limit,
         });
 
-        return NextResponse.json(intervenants, { status: 200 });
+        return NextResponse.json(
+            {
+                intervenants,
+                pagination: {
+                    page,
+                    limit,
+                    totalCount,
+                    totalPages: Math.ceil(totalCount / limit),
+                },
+            },
+            { status: 200 }
+        );
 
     } catch (error) {
         return handleAPIError(error);
