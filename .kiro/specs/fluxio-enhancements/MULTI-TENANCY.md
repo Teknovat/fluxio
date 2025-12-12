@@ -341,7 +341,7 @@ export async function POST(request: NextRequest) {
         reconciliationGapThreshold: 500,
         defaultAdvanceDueDays: 30,
         companyName,
-        currency: "XAF",
+        currency: "TND",
         alertsEnabled: true,
         categoriesEnabled: true,
         advancesEnabled: true,

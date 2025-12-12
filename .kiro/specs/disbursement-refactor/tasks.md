@@ -503,20 +503,23 @@ This implementation plan covers the refactoring of the Advance module into a Dis
     - Updated Prisma schema comment to reflect new alert types
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.9_
 
-  - [ ] 17.2 Update alert display components
+  - [x] 17.2 Update alert display components
 
-    - Create AlertBanner component if it doesn't exist
-    - Update alert navigation links to point to /disbursements instead of /avances
-    - Display disbursement alerts on Cash Dashboard
-    - Add alert count badge in navigation bar
+    - Created AlertBanner component with severity-based styling
+    - Updated alert navigation links to point to /disbursements instead of /avances
+    - Displayed disbursement alerts on Cash Dashboard with dismiss functionality
+    - Added alert count badge in navigation bar with auto-refresh every 5 minutes
+    - Created API endpoints: GET /api/alerts, POST /api/alerts/[id]/dismiss, POST /api/alerts/check
     - _Requirements: 12.4, 12.8_
 
-  - [ ] 17.3 Add alert configuration in settings
-    - Add disbursementOverdueThreshold setting to Settings model/interface
-    - Add disbursementOutstandingThreshold setting (currently defaults to 10000)
-    - Add disbursementOpenDaysWarning setting (currently hardcoded to 30 days)
-    - Update settings API endpoints to handle new fields
-    - Create settings page if it doesn't exist
+  - [x] 17.3 Add alert configuration in settings
+    - Added disbursementOutstandingThreshold setting to Settings model (default: 10000)
+    - Added disbursementOpenDaysWarning setting to Settings model (default: 30 days)
+    - Created settings API endpoints: GET /api/settings, PUT /api/settings
+    - Created settings page at /settings with all alert configuration options
+    - Added Settings link to navigation menu (admin only)
+    - Updated alert functions to use configurable thresholds from settings
+    - Created migration script for new settings fields
     - _Requirements: 12.5_
 
 ## Phase 12: Reporting and Export

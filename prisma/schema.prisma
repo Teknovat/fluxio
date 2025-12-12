@@ -188,19 +188,21 @@ model Alert {
 
 // Settings model for tenant-specific configuration
 model Settings {
-  id                         String   @id @default(cuid())
-  tenantId                   String   @unique
-  debtThreshold              Float    @default(10000)
-  minCashBalance             Float    @default(5000)
-  reconciliationGapThreshold Float    @default(500)
-  defaultAdvanceDueDays      Int      @default(30)
-  companyName                String   @default("Fluxio")
-  companyLogo                String?
-  currency                   String   @default("XAF")
-  alertsEnabled              Boolean  @default(true)
-  categoriesEnabled          Boolean  @default(true)
-  advancesEnabled            Boolean  @default(true)
-  updatedAt                  DateTime @updatedAt
+  id                                String   @id @default(cuid())
+  tenantId                          String   @unique
+  debtThreshold                     Float    @default(10000)
+  minCashBalance                    Float    @default(5000)
+  reconciliationGapThreshold        Float    @default(500)
+  defaultAdvanceDueDays             Int      @default(30)
+  disbursementOutstandingThreshold  Float    @default(10000)
+  disbursementOpenDaysWarning       Int      @default(30)
+  companyName                       String   @default("Fluxio")
+  companyLogo                       String?
+  currency                          String   @default("TND")
+  alertsEnabled                     Boolean  @default(true)
+  categoriesEnabled                 Boolean  @default(true)
+  advancesEnabled                   Boolean  @default(true)
+  updatedAt                         DateTime @updatedAt
 
   @@index([tenantId])
 }

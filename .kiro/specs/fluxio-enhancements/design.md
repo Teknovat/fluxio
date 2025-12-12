@@ -100,7 +100,7 @@ model Settings {
   defaultAdvanceDueDays   Int     @default(30)
   companyName             String  @default("Fluxio")
   companyLogo             String?
-  currency                String  @default("XAF")
+  currency                String  @default("TND")
   alertsEnabled           Boolean @default(true)
   categoriesEnabled       Boolean @default(true)
   advancesEnabled         Boolean @default(true)

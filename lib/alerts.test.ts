@@ -60,7 +60,7 @@ describe("Alert Utilities", () => {
                 reconciliationGapThreshold: 500,
                 defaultAdvanceDueDays: 30,
                 companyName: "Test Company",
-                currency: "XAF",
+                currency: "TND",
                 alertsEnabled: true,
                 categoriesEnabled: true,
                 advancesEnabled: true,

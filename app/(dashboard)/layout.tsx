@@ -17,6 +17,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [user, setUser] = useState<User | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [alertCount, setAlertCount] = useState(0);
 
   // Fetch user data from localStorage on mount
   useEffect(() => {
@@ -29,6 +30,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         localStorage.removeItem("user");
       }
     }
+  }, []);
+
+  // Fetch alert count
+  useEffect(() => {
+    const fetchAlertCount = async () => {
+      try {
+        const response = await fetch("/api/alerts?dismissed=false");
+        if (response.ok) {
+          const alerts = await response.json();
+          setAlertCount(alerts.length);
+        }
+      } catch (error) {
+        console.error("Error fetching alerts:", error);
+      }
+    };
+
+    fetchAlertCount();
+    // Refresh alert count every 5 minutes
+    const interval = setInterval(fetchAlertCount, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogout = async () => {
@@ -164,6 +185,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     >
                       Utilisateurs
                     </Link>
+
+                    <Link
+                      href="/settings"
+                      className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                        isActive("/settings")
+                          ? "bg-blue-50 text-blue-700 border-b-2 border-blue-600"
+                          : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                      }`}
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                      </svg>
+                      Paramètres
+                    </Link>
                   </>
                 )}
               </div>
@@ -171,6 +217,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             {/* User Info and Logout (Desktop) */}
             <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-4">
+              {/* Alert Badge */}
+              {alertCount > 0 && (
+                <Link
+                  href="/dashboard"
+                  className="relative inline-flex items-center p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+                  title={`${alertCount} alerte${alertCount > 1 ? "s" : ""} active${alertCount > 1 ? "s" : ""}`}
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                    />
+                  </svg>
+                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                    {alertCount > 99 ? "99+" : alertCount}
+                  </span>
+                </Link>
+              )}
+
               {user && (
                 <div className="text-sm text-gray-700">
                   <span className="font-medium">{user.name}</span>
@@ -310,6 +377,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     }`}
                   >
                     Utilisateurs
+                  </Link>
+
+                  <Link
+                    href="/settings"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`block px-4 py-2 text-base font-medium ${
+                      isActive("/settings")
+                        ? "bg-blue-50 text-blue-700 border-l-4 border-blue-600"
+                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                    }`}
+                  >
+                    Paramètres
                   </Link>
                 </>
               )}

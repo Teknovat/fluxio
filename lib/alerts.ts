@@ -197,9 +197,10 @@ async function checkLongOpenDisbursements(
     const alerts: Partial<Alert>[] = [];
 
     const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const warningDays = (settings as any).disbursementOpenDaysWarning || 30;
+    const warningDate = new Date(now.getTime() - warningDays * 24 * 60 * 60 * 1000);
 
-    // Find all disbursements open for more than 30 days
+    // Find all disbursements open for more than configured days
     const longOpenDisbursements = await prisma.disbursement.findMany({
         where: {
             tenantId,
@@ -207,7 +208,7 @@ async function checkLongOpenDisbursements(
                 not: DisbursementStatus.JUSTIFIED,
             },
             createdAt: {
-                lt: thirtyDaysAgo,
+                lt: warningDate,
             },
         },
         include: {
@@ -235,7 +236,7 @@ async function checkLongOpenDisbursements(
                 tenantId,
                 type: AlertType.LONG_OPEN_DISBURSEMENT,
                 title: `Décaissement ouvert depuis longtemps: ${disbursement.intervenant.name}`,
-                message: `Décaissement de ${disbursement.remainingAmount.toFixed(2)} ${settings.currency} ouvert depuis ${daysOpen} jours`,
+                message: `Décaissement de ${disbursement.remainingAmount.toFixed(2)} ${settings.currency} ouvert depuis ${daysOpen} jours (seuil: ${warningDays} jours)`,
                 severity: "WARNING",
                 relatedId: disbursement.id,
                 dismissed: false,

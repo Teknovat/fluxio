@@ -8,8 +8,10 @@ import RecentMovementsTable from "@/components/RecentMovementsTable";
 import CashBalanceTrendChart from "@/components/CashBalanceTrendChart";
 import CashInflowForm from "@/components/CashInflowForm";
 import DisbursementForm from "@/components/DisbursementForm";
+import AlertBanner from "@/components/AlertBanner";
 import Toast from "@/components/Toast";
 import { formatAmount } from "@/lib/currency";
+import { Alert } from "@/types";
 
 interface CashDashboardData {
   currentBalance: number;
@@ -30,13 +32,16 @@ export default function DashboardPage() {
   const [showDisbursementForm, setShowDisbursementForm] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [alerts, setAlerts] = useState<Alert[]>([]);
 
   useEffect(() => {
     fetchDashboardData();
+    fetchAlerts();
 
     // Auto-refresh every 5 minutes
     const interval = setInterval(() => {
       fetchDashboardData();
+      fetchAlerts();
     }, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
@@ -77,6 +82,58 @@ export default function DashboardPage() {
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
+  };
+
+  const fetchAlerts = async () => {
+    try {
+      const response = await fetch("/api/alerts?dismissed=false");
+      if (response.ok) {
+        const data = await response.json();
+        setAlerts(data);
+      }
+    } catch (error) {
+      console.error("Error fetching alerts:", error);
+    }
+  };
+
+  const handleDismissAlert = async (alertId: string) => {
+    try {
+      const response = await fetch(`/api/alerts/${alertId}/dismiss`, {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        setAlerts(alerts.filter((alert) => alert.id !== alertId));
+        showToast("Alerte ignorée", "success");
+      } else {
+        showToast("Erreur lors de l'ignorance de l'alerte", "error");
+      }
+    } catch (error) {
+      console.error("Error dismissing alert:", error);
+      showToast("Erreur lors de l'ignorance de l'alerte", "error");
+    }
+  };
+
+  const handleCheckAlerts = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/alerts/check", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        showToast(`Vérification terminée: ${data.alertsCreated} alerte(s) créée(s)`, "success");
+        fetchAlerts(); // Refresh alerts
+      } else {
+        showToast("Erreur lors de la vérification des alertes", "error");
+      }
+    } catch (error) {
+      console.error("Error checking alerts:", error);
+      showToast("Erreur lors de la vérification des alertes", "error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isLoading && !dashboardData) {
@@ -225,6 +282,25 @@ export default function DashboardPage() {
         {/* Balance Trend Chart */}
         <CashBalanceTrendChart data={dashboardData.balanceTrend} />
 
+        {/* Alerts Section */}
+        {alerts.length > 0 && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Alertes ({alerts.length})
+              </h3>
+            </div>
+            <AlertBanner alerts={alerts} onDismiss={handleDismissAlert} />
+          </div>
+        )}
+
         {/* Outstanding Disbursements Summary */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-center mb-4">
@@ -251,6 +327,24 @@ export default function DashboardPage() {
 
       {/* Recent Movements */}
       <RecentMovementsTable movements={dashboardData.recentMovements} />
+
+      {/* Test Alert Button (Development Only) */}
+      {process.env.NODE_ENV === "development" && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-yellow-800">Mode Développement</h3>
+              <p className="text-xs text-yellow-700 mt-1">Déclencher manuellement la vérification des alertes</p>
+            </div>
+            <button
+              onClick={handleCheckAlerts}
+              className="px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-md hover:bg-yellow-700"
+            >
+              🔍 Vérifier les Alertes
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <CashInflowForm

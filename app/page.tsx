@@ -136,7 +136,7 @@ export default function Home() {
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Multi-devises</h3>
             <p className="text-gray-600">
-              Gérez vos transactions en XAF, EUR, USD ou toute autre devise selon vos besoins.
+              Gérez vos transactions en TND, EUR, USD ou toute autre devise selon vos besoins.
             </p>
           </div>
 

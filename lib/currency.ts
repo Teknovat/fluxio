@@ -31,6 +31,12 @@ export const CURRENCIES: Record<string, CurrencyConfig> = {
         locale: "ar-MA",
         name: "Dirham Marocain",
     },
+    XAF: {
+        code: "XAF",
+        symbol: "FCFA",
+        locale: "fr-CM",
+        name: "Franc CFA",
+    },
 };
 
 // Default currency
