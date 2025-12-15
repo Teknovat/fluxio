@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 import { handleAPIError } from '@/lib/api-errors';
 import { calculateDisbursementRemaining, determineDisbursementStatus } from '@/lib/disbursement-calculations';
+import { calculateDocumentStatus, calculateRemainingAmount } from '@/lib/document-calculations';
+import { validatePaymentAmount } from '@/lib/document-validations';
 import { JustificationCategory } from '@/types';
 
 /**
@@ -10,6 +12,7 @@ import { JustificationCategory } from '@/types';
  * Add a justification to a disbursement
  * This does NOT create a cash movement - only documents how funds were used
  * Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.10, 11.2, 11.5
+ * Document Tracking Requirements: 3.1, 3.2, 3.3, 3.4, 3.5
  */
 export async function POST(
     request: NextRequest,
@@ -23,9 +26,9 @@ export async function POST(
 
         const { id } = params;
 
-        // Parse and validate request body (Requirement 2.4)
+        // Parse and validate request body (Requirement 2.4, 3.1)
         const body = await request.json();
-        const { date, amount, category, reference, note } = body;
+        const { date, amount, category, reference, note, documentId } = body;
 
         // Validate required fields
         if (!date || !amount || !category) {
@@ -101,11 +104,48 @@ export async function POST(
             );
         }
 
-        // Create justification record (NO movement) (Requirement 2.1, 2.2, 2.3)
+        // If documentId is provided, validate and check document (Requirement 3.1, 3.2, 3.3)
+        let document = null;
+        if (documentId) {
+            // Fetch document and verify it belongs to the same tenant
+            document = await prisma.document.findFirst({
+                where: {
+                    id: documentId,
+                    tenantId,
+                },
+            });
+
+            if (!document) {
+                return NextResponse.json(
+                    {
+                        error: 'Not Found',
+                        message: 'Document not found',
+                        statusCode: 404,
+                    },
+                    { status: 404 }
+                );
+            }
+
+            // Validate payment amount against document remaining amount (Requirement 3.2, 3.3)
+            const validation = validatePaymentAmount(amount, document.remainingAmount);
+            if (!validation.isValid) {
+                return NextResponse.json(
+                    {
+                        error: 'Bad Request',
+                        message: validation.error,
+                        statusCode: 400,
+                    },
+                    { status: 400 }
+                );
+            }
+        }
+
+        // Create justification record (NO movement) (Requirement 2.1, 2.2, 2.3, 3.1)
         const justification = await prisma.justification.create({
             data: {
                 tenantId,
                 disbursementId: id,
+                documentId: documentId || null,
                 date: new Date(date),
                 amount,
                 category,
@@ -124,6 +164,22 @@ export async function POST(
             : newRemaining < disbursement.initialAmount
                 ? 'PARTIALLY_JUSTIFIED'
                 : 'OPEN';
+
+        // If document is linked, update document paid amount and status (Requirement 3.4, 3.5)
+        if (document) {
+            const newPaidAmount = document.paidAmount + amount;
+            const newRemainingAmount = calculateRemainingAmount(document.totalAmount, newPaidAmount);
+            const newDocumentStatus = calculateDocumentStatus(document.totalAmount, newPaidAmount);
+
+            await prisma.document.update({
+                where: { id: documentId },
+                data: {
+                    paidAmount: newPaidAmount,
+                    remainingAmount: newRemainingAmount,
+                    status: newDocumentStatus,
+                },
+            });
+        }
 
         // Update disbursement remainingAmount and status (Requirement 2.3, 2.6, 2.7)
         const updatedDisbursement = await prisma.disbursement.update({
@@ -160,6 +216,7 @@ export async function POST(
                         category: true,
                         reference: true,
                         note: true,
+                        documentId: true,
                         createdBy: true,
                         createdAt: true,
                         updatedAt: true,

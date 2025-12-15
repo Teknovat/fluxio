@@ -94,7 +94,7 @@ export default function AvancesPage() {
       const response = await fetch("/api/intervenants?active=true");
       if (response.ok) {
         const data = await response.json();
-        setIntervenants(data);
+        setIntervenants(data.intervenants);
       }
     } catch (error) {
       console.error("Error fetching intervenants:", error);

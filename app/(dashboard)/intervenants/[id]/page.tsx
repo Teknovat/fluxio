@@ -10,6 +10,9 @@ import {
   MouvementType,
   MovementCategory,
   DisbursementStatus,
+  Document,
+  DocumentStatus,
+  DocumentType,
 } from "@/types";
 import { formatAmount } from "@/lib/currency";
 import Toast from "@/components/Toast";
@@ -26,6 +29,7 @@ export default function IntervenantDetailPage() {
   const [movements, setMovements] = useState<Mouvement[]>([]);
   const [filteredMovements, setFilteredMovements] = useState<Mouvement[]>([]);
   const [disbursements, setDisbursements] = useState<Disbursement[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [expandedDisbursement, setExpandedDisbursement] = useState<string | null>(null);
@@ -45,6 +49,7 @@ export default function IntervenantDetailPage() {
     if (intervenantId) {
       fetchIntervenantData();
       fetchDisbursements();
+      fetchDocuments();
     }
   }, [intervenantId]);
 
@@ -84,6 +89,18 @@ export default function IntervenantDetailPage() {
       }
     } catch (error) {
       console.error("Error fetching disbursements:", error);
+    }
+  };
+
+  const fetchDocuments = async () => {
+    try {
+      const response = await fetch(`/api/documents?intervenantId=${intervenantId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setDocuments(data.documents || []);
+      }
+    } catch (error) {
+      console.error("Error fetching documents:", error);
     }
   };
 
@@ -176,6 +193,26 @@ export default function IntervenantDetailPage() {
       AUTRES: "Autres",
     };
     return labels[category];
+  };
+
+  const getDocumentTypeLabel = (type: DocumentType) => {
+    const labels: Record<DocumentType, string> = {
+      INVOICE: "Facture",
+      PAYSLIP: "Bulletin de salaire",
+      PURCHASE_ORDER: "Bon de commande",
+      CONTRACT: "Contrat",
+      OTHER: "Autre",
+    };
+    return labels[type];
+  };
+
+  const getDocumentStatusBadge = (status: DocumentStatus) => {
+    const badges: Record<DocumentStatus, { bg: string; text: string; label: string }> = {
+      UNPAID: { bg: "bg-red-100", text: "text-red-800", label: "Non payé" },
+      PARTIALLY_PAID: { bg: "bg-yellow-100", text: "text-yellow-800", label: "Partiellement payé" },
+      PAID: { bg: "bg-green-100", text: "text-green-800", label: "Payé" },
+    };
+    return badges[status];
   };
 
   if (isLoading) {
@@ -506,6 +543,97 @@ export default function IntervenantDetailPage() {
                       )}
                     </div>
                   )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Documents Section */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Documents</h2>
+          <button
+            onClick={() => router.push(`/documents?intervenantId=${intervenantId}`)}
+            className="text-sm text-blue-600 hover:text-blue-800"
+          >
+            Voir tous les documents →
+          </button>
+        </div>
+
+        {documents.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <p>Aucun document pour cet intervenant</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {documents.map((document) => {
+              const statusBadge = getDocumentStatusBadge(document.status);
+              const isOverdue =
+                document.dueDate && new Date(document.dueDate) < new Date() && document.status !== DocumentStatus.PAID;
+              const progress = (document.paidAmount / document.totalAmount) * 100;
+
+              return (
+                <div
+                  key={document.id}
+                  className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${
+                    isOverdue ? "border-red-300 bg-red-50" : "border-gray-200"
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-medium text-gray-900">{document.reference}</h3>
+                        <span
+                          className={`px-2 py-1 text-xs font-semibold rounded-full ${statusBadge.bg} ${statusBadge.text}`}
+                        >
+                          {statusBadge.label}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600">{getDocumentTypeLabel(document.type)}</p>
+                      {document.dueDate && (
+                        <p className={`text-xs ${isOverdue ? "text-red-600 font-medium" : "text-gray-500"}`}>
+                          Échéance: {formatDate(document.dueDate)}
+                          {isOverdue && " (En retard)"}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500">Total</p>
+                      <p className="text-lg font-semibold text-gray-900">{formatAmount(document.totalAmount)}</p>
+                    </div>
+                  </div>
+
+                  {/* Payment Progress */}
+                  <div className="mb-3">
+                    <div className="flex justify-between text-xs text-gray-600 mb-1">
+                      <span>Payé: {formatAmount(document.paidAmount)}</span>
+                      <span>Restant: {formatAmount(document.remainingAmount)}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className={`h-2 rounded-full ${
+                          document.status === DocumentStatus.PAID
+                            ? "bg-green-500"
+                            : document.status === DocumentStatus.PARTIALLY_PAID
+                            ? "bg-yellow-500"
+                            : "bg-gray-400"
+                        }`}
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => router.push(`/documents/${document.id}`)}
+                      className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Voir détails →
+                    </button>
+                  </div>
                 </div>
               );
             })}

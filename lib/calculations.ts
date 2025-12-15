@@ -155,6 +155,25 @@ export async function calculateAllBalances(
             },
         });
 
+        // Fetch all justifications for this intervenant's disbursements
+        const allJustifications = await prisma.justification.findMany({
+            where: {
+                tenantId,
+                disbursement: {
+                    intervenantId: intervenant.id,
+                },
+            },
+            select: {
+                amount: true,
+                documentId: true,
+            },
+        });
+
+        // Calculate total amount justified with documents (filter for non-null documentId)
+        const totalJustifiedWithDocuments = allJustifications
+            .filter((j) => j.documentId !== null)
+            .reduce((sum, j) => sum + j.amount, 0);
+
         const totalEntries = movements
             .filter((m) => m.type === MouvementType.ENTREE)
             .reduce((sum, m) => sum + m.amount, 0);
@@ -163,7 +182,10 @@ export async function calculateAllBalances(
             .filter((m) => m.type === MouvementType.SORTIE)
             .reduce((sum, m) => sum + m.amount, 0);
 
-        const balance = totalExits - totalEntries;
+        // Adjust balance: subtract amounts justified with documents from exits
+        // because these are legitimate payments (salaries, invoices) not debts
+        const adjustedExits = totalExits - totalJustifiedWithDocuments;
+        const balance = adjustedExits - totalEntries;
 
         const lastMovementDate =
             movements.length > 0 ? movements[0].date : undefined;

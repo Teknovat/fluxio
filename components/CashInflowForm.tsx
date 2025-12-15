@@ -39,7 +39,7 @@ export default function CashInflowForm({ isOpen, onClose, onSuccess }: CashInflo
       const response = await fetch("/api/intervenants");
       if (response.ok) {
         const data = await response.json();
-        setIntervenants(data || []);
+        setIntervenants(data.intervenants || []);
       }
     } catch (error) {
       console.error("Error fetching intervenants:", error);

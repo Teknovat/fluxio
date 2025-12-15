@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Disbursement, JustificationCategory } from "@/types";
+import { Disbursement, JustificationCategory, Document } from "@/types";
 import { formatAmount, getCurrency } from "@/lib/currency";
+import DocumentSelector from "./DocumentSelector";
 
 interface JustificationFormProps {
   isOpen: boolean;
@@ -30,6 +31,8 @@ export default function JustificationForm({
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
   const [currencySymbol, setCurrencySymbol] = useState("€");
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [showDocumentSelector, setShowDocumentSelector] = useState(false);
 
   // Category labels
   const categoryLabels: Record<JustificationCategory, string> = {
@@ -64,6 +67,10 @@ export default function JustificationForm({
       errors.amount = "Le montant doit être supérieur à 0";
     } else if (parseFloat(amount) > disbursement.remaining) {
       errors.amount = `Le montant ne peut pas dépasser le montant restant (${formatAmount(disbursement.remaining)})`;
+    } else if (selectedDocument && parseFloat(amount) > selectedDocument.remainingAmount) {
+      errors.amount = `Le montant ne peut pas dépasser le montant restant du document (${formatAmount(
+        selectedDocument.remainingAmount
+      )})`;
     }
 
     if (!category) {
@@ -91,6 +98,7 @@ export default function JustificationForm({
         category,
         reference: reference || undefined,
         note: note || undefined,
+        documentId: selectedDocument?.id || undefined,
       };
 
       const response = await fetch(`/api/disbursements/${disbursement.id}/justify`, {
@@ -135,6 +143,8 @@ export default function JustificationForm({
     setCategory("");
     setReference("");
     setNote("");
+    setSelectedDocument(null);
+    setShowDocumentSelector(false);
     setValidationErrors({});
     setError(null);
   };
@@ -181,6 +191,54 @@ export default function JustificationForm({
           {/* Error Message */}
           {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">{error}</div>}
 
+          {/* Document Linking Section */}
+          <div className="border-b border-gray-200 pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">Lier à un document (optionnel)</label>
+              <button
+                type="button"
+                onClick={() => setShowDocumentSelector(!showDocumentSelector)}
+                className="text-sm text-blue-600 hover:text-blue-800 underline"
+              >
+                {showDocumentSelector ? "Masquer" : "Sélectionner un document"}
+              </button>
+            </div>
+
+            {showDocumentSelector && (
+              <div className="mt-3">
+                <DocumentSelector
+                  intervenantId={disbursement.intervenantId}
+                  onSelect={setSelectedDocument}
+                  selectedDocumentId={selectedDocument?.id}
+                />
+              </div>
+            )}
+
+            {/* Selected Document Info */}
+            {selectedDocument && (
+              <div className="mt-3 bg-green-50 border border-green-200 rounded-md p-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-green-900">Document sélectionné</p>
+                    <p className="text-xs text-green-700 mt-1">
+                      <strong>Référence:</strong> {selectedDocument.reference}
+                    </p>
+                    <p className="text-xs text-green-700 mt-1">
+                      <strong>Montant restant:</strong> {formatAmount(selectedDocument.remainingAmount)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDocument(null)}
+                    className="text-sm text-green-600 hover:text-green-800 underline ml-2"
+                  >
+                    Retirer
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Date Input */}
           <div>
             <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
@@ -209,7 +267,11 @@ export default function JustificationForm({
                 id="amount"
                 step="0.01"
                 min="0"
-                max={disbursement.remaining}
+                max={
+                  selectedDocument
+                    ? Math.min(disbursement.remaining, selectedDocument.remainingAmount)
+                    : disbursement.remaining
+                }
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
@@ -222,7 +284,22 @@ export default function JustificationForm({
               </div>
             </div>
             {validationErrors.amount && <p className="mt-1 text-sm text-red-600">{validationErrors.amount}</p>}
-            <p className="mt-1 text-xs text-gray-500">Maximum : {formatAmount(disbursement.remaining)}</p>
+
+            {/* Warning if amount exceeds document remaining */}
+            {selectedDocument && amount && parseFloat(amount) > selectedDocument.remainingAmount && (
+              <div className="mt-2 bg-yellow-50 border border-yellow-200 text-yellow-800 px-3 py-2 rounded text-sm">
+                <strong>⚠️ Attention :</strong> Le montant dépasse le montant restant du document (
+                {formatAmount(selectedDocument.remainingAmount)})
+              </div>
+            )}
+
+            {/* Display limits */}
+            <div className="mt-1 text-xs text-gray-500 space-y-1">
+              <p>Maximum (décaissement) : {formatAmount(disbursement.remaining)}</p>
+              {selectedDocument && (
+                <p className="text-blue-600">Maximum (document) : {formatAmount(selectedDocument.remainingAmount)}</p>
+              )}
+            </div>
           </div>
 
           {/* Category Dropdown */}

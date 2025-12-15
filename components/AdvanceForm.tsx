@@ -42,7 +42,7 @@ export default function AdvanceForm({ isOpen, onClose, onSuccess, onShowToast }:
       if (response.ok) {
         const data = await response.json();
         // Filter to only show ASSOCIE type intervenants for advances
-        const associes = data.filter(
+        const associes = data.intervenants.filter(
           (i: Intervenant) => i.type === IntervenantType.ASSOCIE || i.type === IntervenantType.COLLABORATEUR
         );
         setIntervenants(associes);

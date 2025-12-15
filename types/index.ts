@@ -71,6 +71,20 @@ export enum JustificationCategory {
     OTHER = "OTHER",
 }
 
+export enum DocumentType {
+    INVOICE = "INVOICE",
+    PAYSLIP = "PAYSLIP",
+    PURCHASE_ORDER = "PURCHASE_ORDER",
+    CONTRACT = "CONTRACT",
+    OTHER = "OTHER",
+}
+
+export enum DocumentStatus {
+    UNPAID = "UNPAID",
+    PARTIALLY_PAID = "PARTIALLY_PAID",
+    PAID = "PAID",
+}
+
 export enum AlertType {
     DEBT_THRESHOLD = "DEBT_THRESHOLD",
     LOW_CASH = "LOW_CASH",
@@ -201,6 +215,8 @@ export interface Justification {
     tenantId: string;
     disbursementId: string;
     disbursement?: Disbursement;
+    documentId?: string;
+    document?: Document;
     date: Date;
     amount: number;
     category: JustificationCategory;
@@ -210,6 +226,44 @@ export interface Justification {
     createdBy: string;
     createdAt: Date;
     updatedAt: Date;
+}
+
+// Document interface
+export interface Document {
+    id: string;
+    tenantId: string;
+    type: DocumentType;
+    reference: string;
+    intervenantId: string;
+    intervenant?: Intervenant;
+    totalAmount: number;
+    paidAmount: number;
+    remainingAmount: number;
+    status: DocumentStatus;
+    issueDate: Date;
+    dueDate?: Date;
+    notes?: string;
+    attachments?: string[];
+    justifications?: Justification[];
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+// DocumentWithPayments interface for detailed document view
+export interface DocumentWithPayments extends Document {
+    payments: Array<{
+        justification: Justification;
+        disbursement: Disbursement;
+        intervenant: Intervenant;
+    }>;
+}
+
+// DocumentStats interface for dashboard statistics
+export interface DocumentStats {
+    unpaid: { count: number; amount: number };
+    overdue: { count: number; amount: number };
+    dueWithin7Days: { count: number; amount: number };
+    partiallyPaid: { count: number; amount: number };
 }
 
 // CashReconciliation interface

@@ -63,6 +63,7 @@ model Intervenant {
   updatedAt     DateTime       @updatedAt
   mouvements    Mouvement[]
   disbursements Disbursement[] // Renamed from advances
+  documents     Document[]
 
   @@index([tenantId])
   @@index([tenantId, type])
@@ -132,6 +133,8 @@ model Justification {
   tenantId       String
   disbursementId String
   disbursement   Disbursement @relation(fields: [disbursementId], references: [id], onDelete: Cascade)
+  documentId     String? // Optional link to document
+  document       Document?    @relation("DocumentJustifications", fields: [documentId], references: [id], onDelete: SetNull)
   date           DateTime
   amount         Float
   category       String // Must match or be subcategory of disbursement category
@@ -144,6 +147,7 @@ model Justification {
 
   @@index([tenantId])
   @@index([disbursementId])
+  @@index([documentId])
   @@index([date])
 }
 
@@ -188,21 +192,21 @@ model Alert {
 
 // Settings model for tenant-specific configuration
 model Settings {
-  id                                String   @id @default(cuid())
-  tenantId                          String   @unique
-  debtThreshold                     Float    @default(10000)
-  minCashBalance                    Float    @default(5000)
-  reconciliationGapThreshold        Float    @default(500)
-  defaultAdvanceDueDays             Int      @default(30)
-  disbursementOutstandingThreshold  Float    @default(10000)
-  disbursementOpenDaysWarning       Int      @default(30)
-  companyName                       String   @default("Fluxio")
-  companyLogo                       String?
-  currency                          String   @default("TND")
-  alertsEnabled                     Boolean  @default(true)
-  categoriesEnabled                 Boolean  @default(true)
-  advancesEnabled                   Boolean  @default(true)
-  updatedAt                         DateTime @updatedAt
+  id                               String   @id @default(cuid())
+  tenantId                         String   @unique
+  debtThreshold                    Float    @default(10000)
+  minCashBalance                   Float    @default(5000)
+  reconciliationGapThreshold       Float    @default(500)
+  defaultAdvanceDueDays            Int      @default(30)
+  disbursementOutstandingThreshold Float    @default(10000)
+  disbursementOpenDaysWarning      Int      @default(30)
+  companyName                      String   @default("Fluxio")
+  companyLogo                      String?
+  currency                         String   @default("TND")
+  alertsEnabled                    Boolean  @default(true)
+  categoriesEnabled                Boolean  @default(true)
+  advancesEnabled                  Boolean  @default(true)
+  updatedAt                        DateTime @updatedAt
 
   @@index([tenantId])
 }
@@ -223,4 +227,33 @@ model CustomCategory {
   @@unique([tenantId, code])
   @@index([tenantId])
   @@index([tenantId, active])
+}
+
+// Document model for tracking financial documents (invoices, payslips, etc.)
+model Document {
+  id              String          @id @default(cuid())
+  tenantId        String
+  type            String // INVOICE, PAYSLIP, PURCHASE_ORDER, CONTRACT, OTHER
+  reference       String // Unique per tenant
+  intervenantId   String
+  intervenant     Intervenant     @relation(fields: [intervenantId], references: [id], onDelete: Restrict)
+  totalAmount     Float
+  paidAmount      Float           @default(0)
+  remainingAmount Float // Calculated: totalAmount - paidAmount
+  status          String          @default("UNPAID") // UNPAID, PARTIALLY_PAID, PAID
+  issueDate       DateTime
+  dueDate         DateTime?
+  notes           String?
+  attachments     String? // JSON array of file paths
+  justifications  Justification[] @relation("DocumentJustifications")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([tenantId, reference])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, intervenantId])
+  @@index([tenantId, type])
+  @@index([status])
+  @@index([dueDate])
 }

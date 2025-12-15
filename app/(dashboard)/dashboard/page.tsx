@@ -9,6 +9,7 @@ import CashBalanceTrendChart from "@/components/CashBalanceTrendChart";
 import CashInflowForm from "@/components/CashInflowForm";
 import DisbursementForm from "@/components/DisbursementForm";
 import AlertBanner from "@/components/AlertBanner";
+import DocumentStats from "@/components/DocumentStats";
 import Toast from "@/components/Toast";
 import { formatAmount } from "@/lib/currency";
 import { Alert } from "@/types";
@@ -323,6 +324,9 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* Document Stats Widget */}
+        <DocumentStats />
       </div>
 
       {/* Recent Movements */}
