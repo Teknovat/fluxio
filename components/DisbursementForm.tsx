@@ -38,6 +38,7 @@ export default function DisbursementForm({
     STOCK_PURCHASE: "Achat de stock",
     BANK_DEPOSIT: "Dépôt bancaire",
     SALARY_ADVANCE: "Avance sur salaire",
+    CAISSE_END_DAY: "Caisse Fin de Journée",
     GENERAL_EXPENSE: "Frais généraux",
     OTHER: "Autre",
   };

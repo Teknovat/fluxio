@@ -35,6 +35,7 @@ export enum MovementCategory {
     REMBOURSEMENT_ASSOCIES = "REMBOURSEMENT_ASSOCIES",
     VENTES = "VENTES",
     CHARGES_FIXES = "CHARGES_FIXES",
+    CASH_RETURN = "CASH_RETURN", // Retour de caisse
     AUTRES = "AUTRES",
 }
 
@@ -58,12 +59,14 @@ export enum DisbursementCategory {
     BANK_DEPOSIT = "BANK_DEPOSIT",
     SALARY_ADVANCE = "SALARY_ADVANCE",
     GENERAL_EXPENSE = "GENERAL_EXPENSE",
+    CAISSE_END_DAY = 'CAISSE_END_DAY',
     OTHER = "OTHER",
 }
 
 export enum JustificationCategory {
     STOCK_PURCHASE = "STOCK_PURCHASE",
     BANK_DEPOSIT = "BANK_DEPOSIT",
+    CASH_RETURN = "CASH_RETURN", // Retour de caisse - creates ENTREE movement
     SALARY = "SALARY",
     TRANSPORT = "TRANSPORT",
     SUPPLIES = "SUPPLIES",

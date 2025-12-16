@@ -38,6 +38,7 @@ export default function JustificationForm({
   const categoryLabels: Record<JustificationCategory, string> = {
     STOCK_PURCHASE: "Achat de stock",
     BANK_DEPOSIT: "Dépôt bancaire",
+    CASH_RETURN: "Retour caisse",
     SALARY: "Salaire",
     TRANSPORT: "Transport",
     SUPPLIES: "Fournitures",

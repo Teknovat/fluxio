@@ -11,6 +11,7 @@ import { JustificationCategory } from '@/types';
  * POST /api/disbursements/[id]/justify
  * Add a justification to a disbursement
  * This does NOT create a cash movement - only documents how funds were used
+ * EXCEPTION: CASH_RETURN category creates an ENTREE movement to track cash returning to company
  * Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.10, 11.2, 11.5
  * Document Tracking Requirements: 3.1, 3.2, 3.3, 3.4, 3.5
  */
@@ -140,7 +141,27 @@ export async function POST(
             }
         }
 
-        // Create justification record (NO movement) (Requirement 2.1, 2.2, 2.3, 3.1)
+        // Create justification record and optionally create ENTREE movement for CASH_RETURN
+        // CASH_RETURN creates an ENTREE movement to track cash returning to the company
+        let cashReturnMovement = null;
+
+        if (category === JustificationCategory.CASH_RETURN) {
+            // Create ENTREE movement for cash return
+            cashReturnMovement = await prisma.mouvement.create({
+                data: {
+                    tenantId,
+                    date: new Date(date),
+                    intervenantId: disbursement.intervenantId,
+                    type: 'ENTREE',
+                    amount,
+                    modality: 'ESPECES',
+                    category: 'CASH_RETURN',
+                    reference: reference || `Retour caisse - ${disbursement.id.substring(0, 8)}`,
+                    note: note || 'Retour de caisse',
+                },
+            });
+        }
+
         const justification = await prisma.justification.create({
             data: {
                 tenantId,

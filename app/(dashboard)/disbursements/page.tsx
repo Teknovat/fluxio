@@ -152,6 +152,7 @@ export default function DisbursementsPage() {
       BANK_DEPOSIT: "Dépôt bancaire",
       SALARY_ADVANCE: "Avance sur salaire",
       GENERAL_EXPENSE: "Frais généraux",
+      CAISSE_END_DAY: "Caisse Fin de Journée",
       OTHER: "Autre",
     };
     return labels[category];
@@ -231,6 +232,7 @@ export default function DisbursementsPage() {
               <option value="STOCK_PURCHASE">Achat de stock</option>
               <option value="BANK_DEPOSIT">Dépôt bancaire</option>
               <option value="SALARY_ADVANCE">Avance sur salaire</option>
+              <option value="CAISSE_END_DAY">Caisse Fin de Journée</option>
               <option value="GENERAL_EXPENSE">Frais généraux</option>
               <option value="OTHER">Autre</option>
             </select>

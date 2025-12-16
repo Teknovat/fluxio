@@ -113,7 +113,7 @@ model Disbursement {
   remainingAmount Float
   dueDate         DateTime?
   status          String          @default("OPEN") // OPEN, PARTIALLY_JUSTIFIED, JUSTIFIED
-  category        String? // STOCK_PURCHASE, BANK_DEPOSIT, SALARY_ADVANCE, GENERAL_EXPENSE, OTHER
+  category        String? // STOCK_PURCHASE, BANK_DEPOSIT, SALARY_ADVANCE, GENERAL_EXPENSE, CAISSE_END_DAY, OTHER
   justifications  Justification[]
   returns         Mouvement[]     @relation("DisbursementReturns")
   createdAt       DateTime        @default(now())

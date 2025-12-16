@@ -190,6 +190,7 @@ export default function IntervenantDetailPage() {
       REMBOURSEMENT_ASSOCIES: "Remboursement Associés",
       VENTES: "Ventes",
       CHARGES_FIXES: "Charges Fixes",
+      CASH_RETURN: "Retour Caisse",
       AUTRES: "Autres",
     };
     return labels[category];
@@ -702,6 +703,7 @@ export default function IntervenantDetailPage() {
               <option value="AVANCES_ASSOCIES">Avances Associés</option>
               <option value="VENTES">Ventes</option>
               <option value="CHARGES_FIXES">Charges Fixes</option>
+              <option value="CASH_RETURN">Retour Caisse</option>
               <option value="AUTRES">Autres</option>
             </select>
           </div>

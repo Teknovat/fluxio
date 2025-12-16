@@ -30,6 +30,7 @@ export default function RecentMovementsTable({ movements }: RecentMovementsTable
       REMBOURSEMENT_ASSOCIES: "Remboursement Associé",
       VENTES: "Ventes",
       CHARGES_FIXES: "Charges Fixes",
+      CASH_RETURN: "Retour Caisse",
       AUTRES: "Autres",
     };
     return labels[category];
