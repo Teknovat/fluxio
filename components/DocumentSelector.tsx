@@ -5,12 +5,11 @@ import { Document, DocumentType, DocumentStatus } from "@/types";
 import { formatAmount } from "@/lib/currency";
 
 interface DocumentSelectorProps {
-  intervenantId?: string;
   onSelect: (document: Document | null) => void;
   selectedDocumentId?: string;
 }
 
-export default function DocumentSelector({ intervenantId, onSelect, selectedDocumentId }: DocumentSelectorProps) {
+export default function DocumentSelector({ onSelect, selectedDocumentId }: DocumentSelectorProps) {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,7 +18,7 @@ export default function DocumentSelector({ intervenantId, onSelect, selectedDocu
   // Fetch documents with remaining amount > 0
   useEffect(() => {
     fetchDocuments();
-  }, [intervenantId]);
+  }, []);
 
   const fetchDocuments = async () => {
     setIsLoading(true);
@@ -29,15 +28,11 @@ export default function DocumentSelector({ intervenantId, onSelect, selectedDocu
       // Build query parameters
       const params = new URLSearchParams();
 
-      // Filter by intervenant if provided
-      if (intervenantId) {
-        params.append("intervenantId", intervenantId);
-      }
-
       // We want documents that are not fully paid (have remaining amount > 0)
       // This means UNPAID or PARTIALLY_PAID status
-      params.append("status", DocumentStatus.UNPAID);
-      params.append("status", DocumentStatus.PARTIALLY_PAID);
+      // Use array syntax: status[]=UNPAID&status[]=PARTIALLY_PAID
+      params.append("status[]", DocumentStatus.UNPAID);
+      params.append("status[]", DocumentStatus.PARTIALLY_PAID);
 
       // Fetch all matching documents (no pagination for selector)
       params.append("limit", "100");
@@ -92,11 +87,7 @@ export default function DocumentSelector({ intervenantId, onSelect, selectedDocu
     if (!searchTerm.trim()) return true;
 
     const search = searchTerm.toLowerCase();
-    return (
-      doc.reference.toLowerCase().includes(search) ||
-      doc.intervenant?.name.toLowerCase().includes(search) ||
-      getTypeLabel(doc.type).toLowerCase().includes(search)
-    );
+    return doc.reference.toLowerCase().includes(search) || getTypeLabel(doc.type).toLowerCase().includes(search);
   });
 
   const handleDocumentSelect = (document: Document) => {
@@ -124,7 +115,7 @@ export default function DocumentSelector({ intervenantId, onSelect, selectedDocu
           id="document-search"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Référence, intervenant..."
+          placeholder="Référence..."
           className="text-black w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
@@ -145,11 +136,7 @@ export default function DocumentSelector({ intervenantId, onSelect, selectedDocu
         <div className="space-y-2 max-h-64 overflow-y-auto border border-gray-200 rounded-md p-2">
           {filteredDocuments.length === 0 ? (
             <div className="text-center py-4 text-sm text-gray-500">
-              {searchTerm.trim()
-                ? "Aucun document trouvé pour cette recherche"
-                : intervenantId
-                ? "Aucun document disponible pour cet intervenant"
-                : "Aucun document disponible"}
+              {searchTerm.trim() ? "Aucun document trouvé pour cette recherche" : "Aucun document disponible"}
             </div>
           ) : (
             filteredDocuments.map((document) => {
@@ -176,9 +163,6 @@ export default function DocumentSelector({ intervenantId, onSelect, selectedDocu
                           <p className="text-xs text-gray-500">{getTypeLabel(document.type)}</p>
                         </div>
                       </div>
-
-                      {/* Intervenant Name */}
-                      <p className="text-xs text-gray-600 mb-2">{document.intervenant?.name || "N/A"}</p>
 
                       {/* Remaining Amount */}
                       <div className="flex items-center justify-between">

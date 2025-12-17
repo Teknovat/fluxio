@@ -28,13 +28,6 @@ export async function GET(
                 tenantId, // CRITICAL: Verify tenant ownership
             },
             include: {
-                intervenant: {
-                    select: {
-                        id: true,
-                        name: true,
-                        type: true,
-                    },
-                },
                 justifications: {
                     include: {
                         disbursement: {
@@ -147,7 +140,6 @@ export async function PUT(
         const {
             type,
             reference,
-            intervenantId,
             totalAmount,
             issueDate,
             dueDate,
@@ -187,28 +179,6 @@ export async function PUT(
                 );
             }
             updateData.reference = reference;
-        }
-
-        // Validate and update intervenant if provided
-        if (intervenantId !== undefined && intervenantId !== existingDocument.intervenantId) {
-            const intervenant = await prisma.intervenant.findFirst({
-                where: {
-                    id: intervenantId,
-                    tenantId, // CRITICAL: Verify tenant ownership
-                },
-            });
-
-            if (!intervenant) {
-                return NextResponse.json(
-                    {
-                        error: 'Not Found',
-                        message: 'Intervenant not found or access denied',
-                        statusCode: 404,
-                    },
-                    { status: 404 }
-                );
-            }
-            updateData.intervenantId = intervenantId;
         }
 
         // Validate and update total amount if provided
@@ -285,15 +255,6 @@ export async function PUT(
                 id: documentId,
             },
             data: updateData,
-            include: {
-                intervenant: {
-                    select: {
-                        id: true,
-                        name: true,
-                        type: true,
-                    },
-                },
-            },
         });
 
         return NextResponse.json(updatedDocument, { status: 200 });

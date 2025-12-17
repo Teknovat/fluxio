@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Document, DocumentStatus, DocumentType, Intervenant } from "@/types";
+import { Document, DocumentStatus, DocumentType } from "@/types";
 import Toast from "@/components/Toast";
 import DocumentForm from "@/components/DocumentForm";
 import DocumentCard from "@/components/DocumentCard";
@@ -10,14 +10,12 @@ import { formatAmount } from "@/lib/currency";
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [intervenants, setIntervenants] = useState<Intervenant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   // Filter states
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [selectedType, setSelectedType] = useState<string>("ALL");
-  const [selectedIntervenant, setSelectedIntervenant] = useState<string>("ALL");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,39 +33,11 @@ export default function DocumentsPage() {
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
   const [deletingDocument, setDeletingDocument] = useState<Document | null>(null);
 
-  // Fetch intervenants on mount
-  useEffect(() => {
-    fetchIntervenants();
-  }, []);
-
   // Fetch documents when filters or pagination change
   useEffect(() => {
     fetchDocuments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    selectedStatus,
-    selectedType,
-    selectedIntervenant,
-    dateFrom,
-    dateTo,
-    searchTerm,
-    sortBy,
-    sortOrder,
-    currentPage,
-    itemsPerPage,
-  ]);
-
-  const fetchIntervenants = async () => {
-    try {
-      const response = await fetch("/api/intervenants?active=true");
-      if (response.ok) {
-        const data = await response.json();
-        setIntervenants(data.intervenants);
-      }
-    } catch (error) {
-      console.error("Error fetching intervenants:", error);
-    }
-  };
+  }, [selectedStatus, selectedType, dateFrom, dateTo, searchTerm, sortBy, sortOrder, currentPage, itemsPerPage]);
 
   const fetchDocuments = async () => {
     setIsLoading(true);
@@ -75,9 +45,13 @@ export default function DocumentsPage() {
       const params = new URLSearchParams();
       params.append("page", currentPage.toString());
       params.append("limit", itemsPerPage.toString());
-      if (selectedStatus !== "ALL") params.append("status", selectedStatus);
+
+      // Support multiple status filters using status[] array syntax
+      if (selectedStatus !== "ALL") {
+        params.append("status[]", selectedStatus);
+      }
+
       if (selectedType !== "ALL") params.append("type", selectedType);
-      if (selectedIntervenant !== "ALL") params.append("intervenantId", selectedIntervenant);
       if (dateFrom) params.append("dateFrom", dateFrom);
       if (dateTo) params.append("dateTo", dateTo);
       if (searchTerm) params.append("search", searchTerm);
@@ -105,7 +79,6 @@ export default function DocumentsPage() {
   const clearFilters = () => {
     setSelectedStatus("ALL");
     setSelectedType("ALL");
-    setSelectedIntervenant("ALL");
     setDateFrom("");
     setDateTo("");
     setSearchTerm("");
@@ -217,7 +190,7 @@ export default function DocumentsPage() {
         <div className="relative">
           <input
             type="text"
-            placeholder="Rechercher par référence, intervenant ou notes..."
+            placeholder="Rechercher par référence ou notes..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -286,29 +259,6 @@ export default function DocumentsPage() {
               <option value="PURCHASE_ORDER">Bon de commande</option>
               <option value="CONTRACT">Contrat</option>
               <option value="OTHER">Autre</option>
-            </select>
-          </div>
-
-          {/* Intervenant Filter */}
-          <div>
-            <label htmlFor="intervenant" className="block text-sm font-medium text-gray-700 mb-1">
-              Intervenant
-            </label>
-            <select
-              id="intervenant"
-              value={selectedIntervenant}
-              onChange={(e) => {
-                setSelectedIntervenant(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="ALL">Tous les intervenants</option>
-              {intervenants.map((intervenant) => (
-                <option key={intervenant.id} value={intervenant.id}>
-                  {intervenant.name}
-                </option>
-              ))}
             </select>
           </div>
 
@@ -431,7 +381,7 @@ export default function DocumentsPage() {
         ) : documents.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500">
-              {searchTerm || selectedStatus !== "ALL" || selectedType !== "ALL" || selectedIntervenant !== "ALL"
+              {searchTerm || selectedStatus !== "ALL" || selectedType !== "ALL"
                 ? "Aucun document trouvé avec ces critères"
                 : "Aucun document trouvé"}
             </p>

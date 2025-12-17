@@ -11,8 +11,7 @@ interface DocumentCardProps {
 }
 
 export default function DocumentCard({ document, onView, onEdit, onDelete }: DocumentCardProps) {
-  const { type, reference, intervenant, totalAmount, paidAmount, remainingAmount, status, dueDate, issueDate } =
-    document;
+  const { type, reference, totalAmount, paidAmount, remainingAmount, status, dueDate } = document;
 
   // Calculate progress percentage
   const progress = totalAmount > 0 ? (paidAmount / totalAmount) * 100 : 0;
@@ -90,7 +89,6 @@ export default function DocumentCard({ document, onView, onEdit, onDelete }: Doc
               <p className="text-xs text-gray-500">{getTypeLabel(type)}</p>
             </div>
           </div>
-          <p className="text-sm text-gray-600 mt-1">{intervenant?.name || "N/A"}</p>
         </div>
         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(status)}`}>
           {getStatusLabel(status)}

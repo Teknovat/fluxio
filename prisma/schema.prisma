@@ -63,7 +63,6 @@ model Intervenant {
   updatedAt     DateTime       @updatedAt
   mouvements    Mouvement[]
   disbursements Disbursement[] // Renamed from advances
-  documents     Document[]
 
   @@index([tenantId])
   @@index([tenantId, type])
@@ -235,8 +234,6 @@ model Document {
   tenantId        String
   type            String // INVOICE, PAYSLIP, PURCHASE_ORDER, CONTRACT, OTHER
   reference       String // Unique per tenant
-  intervenantId   String
-  intervenant     Intervenant     @relation(fields: [intervenantId], references: [id], onDelete: Restrict)
   totalAmount     Float
   paidAmount      Float           @default(0)
   remainingAmount Float // Calculated: totalAmount - paidAmount
@@ -252,7 +249,6 @@ model Document {
   @@unique([tenantId, reference])
   @@index([tenantId])
   @@index([tenantId, status])
-  @@index([tenantId, intervenantId])
   @@index([tenantId, type])
   @@index([status])
   @@index([dueDate])

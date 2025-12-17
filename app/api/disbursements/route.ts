@@ -135,7 +135,7 @@ const createDisbursementSchema = z.object({
     }),
     intervenantId: z.string().min(1, 'Intervenant is required'),
     amount: z.number().positive('Amount must be greater than zero'),
-    category: z.enum(['STOCK_PURCHASE', 'BANK_DEPOSIT', 'SALARY_ADVANCE', 'GENERAL_EXPENSE', 'CAISSE_END_DAY', 'OTHER']),
+    category: z.enum(['STOCK_PURCHASE', 'BANK_DEPOSIT', 'SALARY_ADVANCE', 'GENERAL_EXPENSE', 'CAISSE_END_DAY', 'OTHER']).optional(),
     dueDate: z.string().optional().refine((val) => !val || !isNaN(Date.parse(val)), {
         message: 'Invalid due date format',
     }),

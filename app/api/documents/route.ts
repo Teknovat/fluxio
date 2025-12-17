@@ -9,7 +9,7 @@ import { calculateRemainingAmount, calculateDocumentStatus } from '@/lib/documen
 /**
  * GET /api/documents
  * Fetch documents with pagination, filtering, sorting, and search
- * Query params: page, limit, status, type, intervenantId, search, sortBy, sortOrder
+ * Query params: page, limit, status, type, search, sortBy, sortOrder
  */
 export async function GET(request: NextRequest) {
     try {
@@ -26,9 +26,8 @@ export async function GET(request: NextRequest) {
         const skip = (page - 1) * limit;
 
         // Filter parameters
-        const statusParam = searchParams.get('status');
+        const statusParams = searchParams.getAll('status[]'); // Support array: status[]=UNPAID&status[]=PARTIALLY_PAID
         const typeParam = searchParams.get('type');
-        const intervenantIdParam = searchParams.get('intervenantId');
         const searchParam = searchParams.get('search');
 
         // Sort parameters
@@ -40,9 +39,14 @@ export async function GET(request: NextRequest) {
             tenantId, // CRITICAL: Filter by tenant
         };
 
-        // Filter by status if provided
-        if (statusParam && Object.values(DocumentStatus).includes(statusParam as DocumentStatus)) {
-            where.status = statusParam;
+        // Filter by status if provided (supports multiple statuses)
+        if (statusParams.length > 0) {
+            const validStatuses = statusParams.filter(status =>
+                Object.values(DocumentStatus).includes(status as DocumentStatus)
+            );
+            if (validStatuses.length > 0) {
+                where.status = { in: validStatuses };
+            }
         }
 
         // Filter by type if provided
@@ -50,17 +54,11 @@ export async function GET(request: NextRequest) {
             where.type = typeParam;
         }
 
-        // Filter by intervenant if provided
-        if (intervenantIdParam) {
-            where.intervenantId = intervenantIdParam;
-        }
-
-        // Search in reference, intervenant name, and notes
+        // Search in reference and notes
         if (searchParam) {
             where.OR = [
                 { reference: { contains: searchParam, mode: 'insensitive' } },
                 { notes: { contains: searchParam, mode: 'insensitive' } },
-                { intervenant: { name: { contains: searchParam, mode: 'insensitive' } } },
             ];
         }
 
@@ -82,15 +80,6 @@ export async function GET(request: NextRequest) {
         // Fetch filtered documents from database with pagination
         const documents = await prisma.document.findMany({
             where,
-            include: {
-                intervenant: {
-                    select: {
-                        id: true,
-                        name: true,
-                        type: true,
-                    },
-                },
-            },
             orderBy,
             skip,
             take: limit,
@@ -130,7 +119,6 @@ export async function POST(request: NextRequest) {
         const {
             type,
             reference,
-            intervenantId,
             totalAmount,
             issueDate,
             dueDate,
@@ -139,11 +127,11 @@ export async function POST(request: NextRequest) {
         } = body;
 
         // Validate required fields
-        if (!type || !reference || !intervenantId || totalAmount === undefined || !issueDate) {
+        if (!type || !reference || totalAmount === undefined || !issueDate) {
             return NextResponse.json(
                 {
                     error: 'Validation Error',
-                    message: 'Missing required fields: type, reference, intervenantId, totalAmount, issueDate',
+                    message: 'Missing required fields: type, reference, totalAmount, issueDate',
                     statusCode: 400,
                 },
                 { status: 400 }
@@ -201,25 +189,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Verify intervenant exists and belongs to tenant
-        const intervenant = await prisma.intervenant.findFirst({
-            where: {
-                id: intervenantId,
-                tenantId, // CRITICAL: Verify tenant ownership
-            },
-        });
-
-        if (!intervenant) {
-            return NextResponse.json(
-                {
-                    error: 'Not Found',
-                    message: 'Intervenant not found or access denied',
-                    statusCode: 404,
-                },
-                { status: 404 }
-            );
-        }
-
         // Calculate initial values
         const paidAmount = 0;
         const remainingAmount = calculateRemainingAmount(totalAmount, paidAmount);
@@ -231,7 +200,6 @@ export async function POST(request: NextRequest) {
                 tenantId, // CRITICAL: Set tenant
                 type,
                 reference,
-                intervenantId,
                 totalAmount,
                 paidAmount,
                 remainingAmount,
@@ -240,15 +208,6 @@ export async function POST(request: NextRequest) {
                 dueDate: dueDate ? new Date(dueDate) : null,
                 notes: notes || null,
                 attachments: attachments ? JSON.stringify(attachments) : null,
-            },
-            include: {
-                intervenant: {
-                    select: {
-                        id: true,
-                        name: true,
-                        type: true,
-                    },
-                },
             },
         });
 

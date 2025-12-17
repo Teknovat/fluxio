@@ -207,11 +207,7 @@ export default function JustificationForm({
 
             {showDocumentSelector && (
               <div className="mt-3">
-                <DocumentSelector
-                  intervenantId={disbursement.intervenantId}
-                  onSelect={setSelectedDocument}
-                  selectedDocumentId={selectedDocument?.id}
-                />
+                <DocumentSelector onSelect={setSelectedDocument} selectedDocumentId={selectedDocument?.id} />
               </div>
             )}
 

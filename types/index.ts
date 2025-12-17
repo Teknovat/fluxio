@@ -237,8 +237,6 @@ export interface Document {
     tenantId: string;
     type: DocumentType;
     reference: string;
-    intervenantId: string;
-    intervenant?: Intervenant;
     totalAmount: number;
     paidAmount: number;
     remainingAmount: number;

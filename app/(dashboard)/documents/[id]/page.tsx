@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Document, DocumentStatus, DocumentType, Justification, Disbursement, Intervenant } from "@/types";
+import { Document, DocumentStatus, DocumentType, Justification, Disbursement } from "@/types";
 import { formatAmount } from "@/lib/currency";
 import Toast from "@/components/Toast";
 import DocumentForm from "@/components/DocumentForm";
@@ -21,11 +21,6 @@ interface PaymentHistoryItem {
     initialAmount: number;
     remainingAmount: number;
     status: string;
-  };
-  intervenant: {
-    id: string;
-    name: string;
-    type: string;
   };
 }
 
@@ -237,13 +232,6 @@ export default function DocumentDetailPage() {
         </div>
         <div className="px-6 py-5">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Intervenant */}
-            <div>
-              <p className="text-sm font-medium text-gray-500 mb-1">Intervenant</p>
-              <p className="text-lg font-semibold text-gray-900">{document.intervenant?.name || "N/A"}</p>
-              <p className="text-xs text-gray-500">{document.intervenant?.type || ""}</p>
-            </div>
-
             {/* Issue Date */}
             <div>
               <p className="text-sm font-medium text-gray-500 mb-1">Date d&apos;émission</p>
@@ -362,7 +350,6 @@ export default function DocumentDetailPage() {
                         </p>
                       )}
                       <p className="text-sm text-gray-500 mt-2">
-                        <strong>Décaissement:</strong> {payment.intervenant.name} •{" "}
                         <a
                           href={`/disbursements/${payment.disbursement.id}`}
                           className="text-blue-600 hover:text-blue-800"
