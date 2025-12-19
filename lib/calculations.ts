@@ -155,24 +155,40 @@ export async function calculateAllBalances(
             },
         });
 
-        // Fetch all justifications for this intervenant's disbursements
-        const allJustifications = await prisma.justification.findMany({
+        // Fetch all disbursements for this intervenant with justifications and returns
+        const disbursements = await prisma.disbursement.findMany({
             where: {
                 tenantId,
-                disbursement: {
-                    intervenantId: intervenant.id,
-                },
+                intervenantId: intervenant.id,
             },
-            select: {
-                amount: true,
-                documentId: true,
+            include: {
+                justifications: {
+                    select: {
+                        amount: true,
+                    },
+                },
+                returns: {
+                    select: {
+                        amount: true,
+                    },
+                },
             },
         });
 
-        // Calculate total amount justified with documents (filter for non-null documentId)
-        const totalJustifiedWithDocuments = allJustifications
-            .filter((j) => j.documentId !== null)
-            .reduce((sum, j) => sum + j.amount, 0);
+        // Calculate "À justifier ou retourner" from disbursements
+        // This is: Total Disbursed - Total Justified - Total Returned
+        const totalDisbursed = disbursements.reduce((sum, d) => sum + d.initialAmount, 0);
+        const totalJustified = disbursements.reduce(
+            (sum, d) => sum + (d.justifications?.reduce((s, j) => s + j.amount, 0) || 0),
+            0
+        );
+        const totalReturned = disbursements.reduce(
+            (sum, d) => sum + (d.returns?.reduce((s, r) => s + r.amount, 0) || 0),
+            0
+        );
+
+        // Balance = Amount remaining in intervenant's pocket (to justify or return)
+        const balance = totalDisbursed - totalJustified - totalReturned;
 
         const totalEntries = movements
             .filter((m) => m.type === MouvementType.ENTREE)
@@ -181,11 +197,6 @@ export async function calculateAllBalances(
         const totalExits = movements
             .filter((m) => m.type === MouvementType.SORTIE)
             .reduce((sum, m) => sum + m.amount, 0);
-
-        // Adjust balance: subtract amounts justified with documents from exits
-        // because these are legitimate payments (salaries, invoices) not debts
-        const adjustedExits = totalExits - totalJustifiedWithDocuments;
-        const balance = adjustedExits - totalEntries;
 
         const lastMovementDate =
             movements.length > 0 ? movements[0].date : undefined;
@@ -200,7 +211,7 @@ export async function calculateAllBalances(
         });
     }
 
-    // Sort by balance descending (highest debt first)
+    // Sort by balance descending (highest amount to justify/return first)
     balances.sort((a, b) => b.balance - a.balance);
 
     return balances;

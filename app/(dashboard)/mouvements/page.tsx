@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Mouvement, Intervenant, MouvementType, MouvementSummary, MovementCategory } from "@/types";
 import MouvementForm from "@/components/MouvementForm";
+import DisbursementForm from "@/components/DisbursementForm";
 import Toast from "@/components/Toast";
 import CurrencySelector from "@/components/CurrencySelector";
 import Pagination from "@/components/Pagination";
@@ -36,6 +37,7 @@ export default function MouvementsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<{ role: string } | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showDisbursementModal, setShowDisbursementModal] = useState(false);
   const [editingMouvement, setEditingMouvement] = useState<Mouvement | null>(null);
   const [deletingMouvement, setDeletingMouvement] = useState<Mouvement | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -253,21 +255,43 @@ export default function MouvementsPage() {
         <div className="flex items-center space-x-3">
           {isAdmin && <CurrencySelector onCurrencyChange={handleCurrencyChange} />}
           {isAdmin && (
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <svg
-                className="mr-2 h-5 w-5"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+            <>
+              <button
+                onClick={() => setShowDisbursementModal(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Ajouter un mouvement
-            </button>
+                <svg
+                  className="mr-2 h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+                Ajouter un décaissement
+              </button>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <svg
+                  className="mr-2 h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Ajouter un mouvement
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -707,6 +731,14 @@ export default function MouvementsPage() {
         onSuccess={fetchMouvements}
         editMouvement={editingMouvement}
         isAdmin={isAdmin}
+        onShowToast={showToast}
+      />
+
+      {/* Disbursement Form Modal */}
+      <DisbursementForm
+        isOpen={showDisbursementModal}
+        onClose={() => setShowDisbursementModal(false)}
+        onSuccess={fetchMouvements}
         onShowToast={showToast}
       />
 
