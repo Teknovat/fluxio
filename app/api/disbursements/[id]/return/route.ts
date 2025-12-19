@@ -4,6 +4,7 @@ import { requireAuth } from '@/lib/auth';
 import { handleAPIError } from '@/lib/api-errors';
 import { calculateDisbursementRemaining } from '@/lib/disbursement-calculations';
 import { MouvementType } from '@/types';
+import { subtractMoney } from '@/lib/number-utils';
 
 /**
  * POST /api/disbursements/[id]/return
@@ -105,7 +106,7 @@ export async function POST(
         });
 
         // Calculate new remaining amount (Requirement 3.2)
-        const newRemaining = currentRemaining - amount;
+        const newRemaining = subtractMoney(currentRemaining, amount);
 
         // Determine new status (Requirement 3.5)
         const newStatus = newRemaining === 0

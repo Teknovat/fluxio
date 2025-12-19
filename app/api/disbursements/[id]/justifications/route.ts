@@ -5,6 +5,7 @@ import { handleAPIError } from '@/lib/api-errors';
 import { calculateDocumentStatus, calculateRemainingAmount, sumJustificationAmounts } from '@/lib/document-calculations';
 import { calculateDisbursementRemaining } from '@/lib/disbursement-calculations';
 import { validatePaymentAmount } from '@/lib/document-validations';
+import { subtractMoney, addMoney } from '@/lib/number-utils';
 
 /**
  * GET /api/disbursements/[id]/justifications

@@ -83,7 +83,14 @@ export default function DisbursementsPage() {
 
   const fetchSummary = async () => {
     try {
-      const response = await fetch("/api/disbursements/summary");
+      const params = new URLSearchParams();
+      if (selectedStatus !== "ALL") params.append("status", selectedStatus);
+      if (selectedIntervenant !== "ALL") params.append("intervenantId", selectedIntervenant);
+      if (selectedCategory !== "ALL") params.append("category", selectedCategory);
+      if (dateFrom) params.append("dateFrom", dateFrom);
+      if (dateTo) params.append("dateTo", dateTo);
+
+      const response = await fetch(`/api/disbursements/summary?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
         setSummary(data);

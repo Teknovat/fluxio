@@ -14,11 +14,44 @@ export async function GET(request: NextRequest) {
         const payload = await requireAuth(request);
         const tenantId = payload.tenantId;
 
-        // Fetch all disbursements with justifications and returns
+        // Parse query parameters for filtering
+        const { searchParams } = new URL(request.url);
+        const status = searchParams.get('status');
+        const intervenantId = searchParams.get('intervenantId');
+        const category = searchParams.get('category');
+        const dateFrom = searchParams.get('dateFrom');
+        const dateTo = searchParams.get('dateTo');
+
+        // Build where clause with filters
+        const where: any = {
+            tenantId, // CRITICAL: Filter by tenant
+        };
+
+        if (status) {
+            where.status = status;
+        }
+
+        if (intervenantId) {
+            where.intervenantId = intervenantId;
+        }
+
+        if (category) {
+            where.category = category;
+        }
+
+        if (dateFrom || dateTo) {
+            where.createdAt = {};
+            if (dateFrom) {
+                where.createdAt.gte = new Date(dateFrom);
+            }
+            if (dateTo) {
+                where.createdAt.lte = new Date(dateTo);
+            }
+        }
+
+        // Fetch disbursements with filters applied
         const disbursements = await prisma.disbursement.findMany({
-            where: {
-                tenantId, // CRITICAL: Filter by tenant
-            },
+            where,
             include: {
                 justifications: {
                     select: {

@@ -7,6 +7,8 @@
  * Requirements: 1.2, 4.1, 4.2, 4.3
  */
 
+import { subtractMoney, roundToTwoDecimals } from './number-utils';
+
 export type DocumentStatus = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID';
 
 export interface JustificationAmount {
@@ -26,7 +28,7 @@ export function calculateRemainingAmount(
     totalAmount: number,
     paidAmount: number
 ): number {
-    return totalAmount - paidAmount;
+    return subtractMoney(totalAmount, paidAmount);
 }
 
 /**
@@ -88,5 +90,6 @@ export function calculatePaymentPercentage(
 export function sumJustificationAmounts(
     justifications: JustificationAmount[]
 ): number {
-    return justifications.reduce((sum, justification) => sum + justification.amount, 0);
+    const sum = justifications.reduce((sum, justification) => sum + justification.amount, 0);
+    return roundToTwoDecimals(sum);
 }

@@ -6,6 +6,7 @@ import { calculateDisbursementRemaining, determineDisbursementStatus } from '@/l
 import { calculateDocumentStatus, calculateRemainingAmount } from '@/lib/document-calculations';
 import { validatePaymentAmount } from '@/lib/document-validations';
 import { JustificationCategory } from '@/types';
+import { subtractMoney } from '@/lib/number-utils';
 
 /**
  * POST /api/disbursements/[id]/justify
@@ -177,7 +178,7 @@ export async function POST(
         });
 
         // Calculate new remaining amount (Requirement 2.3)
-        const newRemaining = currentRemaining - amount;
+        const newRemaining = subtractMoney(currentRemaining, amount);
 
         // Determine new status (Requirement 2.6, 2.7)
         const newStatus = newRemaining === 0
