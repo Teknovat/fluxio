@@ -7,6 +7,7 @@ import Toast from "@/components/Toast";
 import DisbursementForm from "@/components/DisbursementForm";
 import JustificationForm from "@/components/JustificationForm";
 import ReturnToCashForm from "@/components/ReturnToCashForm";
+import DisbursementDetailModal from "@/components/DisbursementDetailModal";
 import { getDaysOutstanding, isDisbursementOverdue } from "@/lib/disbursement-calculations";
 
 interface DisbursementWithRemaining extends Disbursement {
@@ -41,7 +42,9 @@ export default function DisbursementsPage() {
   const [isDisbursementFormOpen, setIsDisbursementFormOpen] = useState(false);
   const [isJustificationFormOpen, setIsJustificationFormOpen] = useState(false);
   const [isReturnFormOpen, setIsReturnFormOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedDisbursement, setSelectedDisbursement] = useState<DisbursementWithRemaining | null>(null);
+  const [selectedDisbursementId, setSelectedDisbursementId] = useState<string | null>(null);
 
   // Fetch data when filters change
   useEffect(() => {
@@ -132,6 +135,11 @@ export default function DisbursementsPage() {
   const handleReturn = (disbursement: DisbursementWithRemaining) => {
     setSelectedDisbursement(disbursement);
     setIsReturnFormOpen(true);
+  };
+
+  const handleViewDetails = (disbursement: DisbursementWithRemaining) => {
+    setSelectedDisbursementId(disbursement.id);
+    setIsDetailModalOpen(true);
   };
 
   const getStatusLabel = (status: DisbursementStatus): string => {
@@ -326,6 +334,9 @@ export default function DisbursementsPage() {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Intervenant
+                    <div className="text-xs font-normal text-gray-400 mt-1">
+                      Cliquez sur une ligne pour voir les détails
+                    </div>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date
@@ -356,7 +367,11 @@ export default function DisbursementsPage() {
                   const daysOutstanding = getDaysOutstanding(disbursement);
 
                   return (
-                    <tr key={disbursement.id} className={`hover:bg-gray-50 ${overdue ? "bg-red-50" : ""}`}>
+                    <tr
+                      key={disbursement.id}
+                      className={`hover:bg-gray-50 cursor-pointer ${overdue ? "bg-red-50" : ""}`}
+                      onClick={() => handleViewDetails(disbursement)}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
                           {disbursement.intervenant?.name || "N/A"}
@@ -397,14 +412,20 @@ export default function DisbursementsPage() {
                         {disbursement.status !== DisbursementStatus.JUSTIFIED && (
                           <div className="flex justify-center space-x-2">
                             <button
-                              onClick={() => handleJustify(disbursement)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleJustify(disbursement);
+                              }}
                               className="text-blue-600 hover:text-blue-900 font-medium"
                             >
                               Justifier
                             </button>
                             <span className="text-gray-300">|</span>
                             <button
-                              onClick={() => handleReturn(disbursement)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleReturn(disbursement);
+                              }}
                               className="text-green-600 hover:text-green-900 font-medium"
                             >
                               Retour
@@ -468,6 +489,16 @@ export default function DisbursementsPage() {
           onShowToast={showToast}
         />
       )}
+
+      {/* Disbursement Detail Modal */}
+      <DisbursementDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedDisbursementId(null);
+        }}
+        disbursementId={selectedDisbursementId}
+      />
     </div>
   );
 }
