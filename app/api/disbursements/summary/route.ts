@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
         // Parse query parameters for filtering
         const { searchParams } = new URL(request.url);
         const status = searchParams.get('status');
+        const statusArray = searchParams.getAll('status[]');
         const intervenantId = searchParams.get('intervenantId');
         const category = searchParams.get('category');
         const dateFrom = searchParams.get('dateFrom');
@@ -27,7 +28,17 @@ export async function GET(request: NextRequest) {
             tenantId, // CRITICAL: Filter by tenant
         };
 
-        if (status) {
+        // Status filter - support both single status and multiple statuses
+        const validStatuses = ['OPEN', 'PARTIALLY_JUSTIFIED', 'JUSTIFIED'];
+
+        if (statusArray.length > 0) {
+            // Multiple status filtering using status[]
+            const filteredStatuses = statusArray.filter(s => validStatuses.includes(s));
+            if (filteredStatuses.length > 0) {
+                where.status = { in: filteredStatuses };
+            }
+        } else if (status && validStatuses.includes(status)) {
+            // Single status filtering (backward compatibility)
             where.status = status;
         }
 

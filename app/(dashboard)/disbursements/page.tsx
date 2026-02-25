@@ -8,6 +8,10 @@ import DisbursementForm from "@/components/DisbursementForm";
 import JustificationForm from "@/components/JustificationForm";
 import ReturnToCashForm from "@/components/ReturnToCashForm";
 import DisbursementDetailModal from "@/components/DisbursementDetailModal";
+import MultiStatusFilter from "@/components/MultiStatusFilter";
+import ActiveFiltersDisplay from "@/components/ActiveFiltersDisplay";
+import EnhancedSummaryCards from "@/components/EnhancedSummaryCards";
+import EnhancedTableSkeleton from "@/components/EnhancedTableSkeleton";
 import { getDaysOutstanding, isDisbursementOverdue } from "@/lib/disbursement-calculations";
 
 interface DisbursementWithRemaining extends Disbursement {
@@ -32,7 +36,7 @@ export default function DisbursementsPage() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   // Filter states
-  const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedIntervenant, setSelectedIntervenant] = useState<string>("ALL");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [dateFrom, setDateFrom] = useState("");
@@ -51,7 +55,7 @@ export default function DisbursementsPage() {
     fetchDisbursements();
     fetchSummary();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedStatus, selectedIntervenant, selectedCategory, dateFrom, dateTo]);
+  }, [selectedStatuses, selectedIntervenant, selectedCategory, dateFrom, dateTo]);
 
   // Fetch intervenants on mount
   useEffect(() => {
@@ -62,7 +66,10 @@ export default function DisbursementsPage() {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (selectedStatus !== "ALL") params.append("status", selectedStatus);
+      // Add multiple statuses using status[] parameter
+      selectedStatuses.forEach((status) => {
+        params.append("status[]", status);
+      });
       if (selectedIntervenant !== "ALL") params.append("intervenantId", selectedIntervenant);
       if (selectedCategory !== "ALL") params.append("category", selectedCategory);
       if (dateFrom) params.append("dateFrom", dateFrom);
@@ -87,7 +94,10 @@ export default function DisbursementsPage() {
   const fetchSummary = async () => {
     try {
       const params = new URLSearchParams();
-      if (selectedStatus !== "ALL") params.append("status", selectedStatus);
+      // Add multiple statuses using status[] parameter
+      selectedStatuses.forEach((status) => {
+        params.append("status[]", status);
+      });
       if (selectedIntervenant !== "ALL") params.append("intervenantId", selectedIntervenant);
       if (selectedCategory !== "ALL") params.append("category", selectedCategory);
       if (dateFrom) params.append("dateFrom", dateFrom);
@@ -116,11 +126,34 @@ export default function DisbursementsPage() {
   };
 
   const clearFilters = () => {
-    setSelectedStatus("ALL");
+    setSelectedStatuses([]);
     setSelectedIntervenant("ALL");
     setSelectedCategory("ALL");
     setDateFrom("");
     setDateTo("");
+  };
+
+  const handleClearFilter = (filterType: string, value?: string) => {
+    switch (filterType) {
+      case "ALL":
+        clearFilters();
+        break;
+      case "status":
+        if (value) {
+          setSelectedStatuses((prev) => prev.filter((s) => s !== value));
+        }
+        break;
+      case "intervenant":
+        setSelectedIntervenant("ALL");
+        break;
+      case "category":
+        setSelectedCategory("ALL");
+        break;
+      case "dates":
+        setDateFrom("");
+        setDateTo("");
+        break;
+    }
   };
 
   const showToast = (message: string, type: "success" | "error") => {
@@ -190,144 +223,190 @@ export default function DisbursementsPage() {
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Filtres</h2>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {/* Status Filter */}
-          <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
-              Statut
-            </label>
-            <select
-              id="status"
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="ALL">Tous les statuts</option>
-              <option value="OPEN">Ouvert</option>
-              <option value="PARTIALLY_JUSTIFIED">Partiellement justifié</option>
-              <option value="JUSTIFIED">Justifié</option>
-            </select>
-          </div>
-
-          {/* Intervenant Filter */}
-          <div>
-            <label htmlFor="intervenant" className="block text-sm font-medium text-gray-700 mb-1">
-              Intervenant
-            </label>
-            <select
-              id="intervenant"
-              value={selectedIntervenant}
-              onChange={(e) => setSelectedIntervenant(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="ALL">Tous les intervenants</option>
-              {intervenants.map((intervenant) => (
-                <option key={intervenant.id} value={intervenant.id}>
-                  {intervenant.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Category Filter */}
-          <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-              Catégorie
-            </label>
-            <select
-              id="category"
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="ALL">Toutes les catégories</option>
-              <option value="STOCK_PURCHASE">Achat de stock</option>
-              <option value="BANK_DEPOSIT">Dépôt bancaire</option>
-              <option value="SALARY_ADVANCE">Avance sur salaire</option>
-              <option value="CAISSE_END_DAY">Caisse Fin de Journée</option>
-              <option value="GENERAL_EXPENSE">Frais généraux</option>
-              <option value="OTHER">Autre</option>
-            </select>
-          </div>
-
-          {/* Date From */}
-          <div>
-            <label htmlFor="dateFrom" className="block text-sm font-medium text-gray-700 mb-1">
-              Date de début
-            </label>
-            <input
-              type="date"
-              id="dateFrom"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* Date To */}
-          <div>
-            <label htmlFor="dateTo" className="block text-sm font-medium text-gray-700 mb-1">
-              Date de fin
-            </label>
-            <input
-              type="date"
-              id="dateTo"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+      {/* Enhanced Filters Section */}
+      <div className="bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-2xl shadow-sm">
+        <div className="p-6 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-slate-600 to-slate-700 rounded-lg flex items-center justify-center shadow-sm">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"
+                />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Filtres de recherche</h2>
+              <p className="text-sm text-slate-600">Affinez vos résultats avec des critères précis</p>
+            </div>
           </div>
         </div>
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {/* Enhanced Multi-Status Filter */}
+            <div>
+              <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                Statut
+              </label>
+              <MultiStatusFilter
+                selectedStatuses={selectedStatuses}
+                onStatusChange={setSelectedStatuses}
+                disabled={isLoading}
+              />
+            </div>
 
-        {/* Clear Filters Button */}
-        <div className="flex justify-end">
-          <button
-            onClick={clearFilters}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            Effacer les filtres
-          </button>
+            {/* Intervenant Filter */}
+            <div>
+              <label htmlFor="intervenant" className="block text-sm font-medium text-slate-700 mb-2">
+                Intervenant
+              </label>
+              <select
+                id="intervenant"
+                value={selectedIntervenant}
+                onChange={(e) => setSelectedIntervenant(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 focus:border-slate-400 transition-all duration-200"
+              >
+                <option value="ALL">Tous les intervenants</option>
+                {intervenants.map((intervenant) => (
+                  <option key={intervenant.id} value={intervenant.id}>
+                    {intervenant.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Category Filter */}
+            <div>
+              <label htmlFor="category" className="block text-sm font-medium text-slate-700 mb-2">
+                Catégorie
+              </label>
+              <select
+                id="category"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 focus:border-slate-400 transition-all duration-200"
+              >
+                <option value="ALL">Toutes les catégories</option>
+                <option value="STOCK_PURCHASE">Achat de stock</option>
+                <option value="BANK_DEPOSIT">Dépôt bancaire</option>
+                <option value="SALARY_ADVANCE">Avance sur salaire</option>
+                <option value="CAISSE_END_DAY">Caisse Fin de Journée</option>
+                <option value="GENERAL_EXPENSE">Frais généraux</option>
+                <option value="OTHER">Autre</option>
+              </select>
+            </div>
+
+            {/* Date From */}
+            <div>
+              <label htmlFor="dateFrom" className="block text-sm font-medium text-slate-700 mb-2">
+                Date de début
+              </label>
+              <input
+                type="date"
+                id="dateFrom"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 focus:border-slate-400 transition-all duration-200"
+              />
+            </div>
+
+            {/* Date To */}
+            <div>
+              <label htmlFor="dateTo" className="block text-sm font-medium text-slate-700 mb-2">
+                Date de fin
+              </label>
+              <input
+                type="date"
+                id="dateTo"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 focus:border-slate-400 transition-all duration-200"
+              />
+            </div>
+          </div>
+
+          {/* Enhanced Clear Filters Button */}
+          <div className="flex items-center justify-between pt-6 border-t border-slate-100">
+            <div className="text-sm text-slate-600">
+              {selectedStatuses.length > 0 && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-lg">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Filtres actifs
+                </span>
+              )}
+            </div>
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+            >
+              Réinitialiser les filtres
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Total Disbursed */}
-        <div className="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
-          <div className="text-sm font-medium text-gray-600 mb-1">Total décaissé</div>
-          <div className="text-2xl font-bold text-blue-600">{formatAmount(summary.totalDisbursed)}</div>
-          <div className="text-xs text-gray-500 mt-1">Montant total donné</div>
-        </div>
+      {/* Active Filters Display */}
+      <ActiveFiltersDisplay
+        selectedStatuses={selectedStatuses}
+        selectedIntervenant={selectedIntervenant}
+        selectedCategory={selectedCategory}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        intervenants={intervenants}
+        onClearFilter={handleClearFilter}
+        totalResults={disbursements.length}
+      />
 
-        {/* Total Justified */}
-        <div className="bg-white p-6 rounded-lg shadow border-l-4 border-green-500">
-          <div className="text-sm font-medium text-gray-600 mb-1">Total justifié</div>
-          <div className="text-2xl font-bold text-green-600">{formatAmount(summary.totalJustified)}</div>
-          <div className="text-xs text-gray-500 mt-1">Montant justifié + retourné</div>
-        </div>
+      {/* Enhanced Summary Cards */}
+      <EnhancedSummaryCards summary={summary} isLoading={isLoading} />
 
-        {/* Total Outstanding */}
-        <div className="bg-white p-6 rounded-lg shadow border-l-4 border-red-500">
-          <div className="text-sm font-medium text-gray-600 mb-1">Total en attente</div>
-          <div className="text-2xl font-bold text-red-600">{formatAmount(summary.totalOutstanding)}</div>
-          <div className="text-xs text-gray-500 mt-1">Montant restant à justifier</div>
-        </div>
-      </div>
-
-      {/* Disbursements Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      {/* Enhanced Disbursements Table */}
+      {isLoading ? (
+        <EnhancedTableSkeleton />
+      ) : disbursements.length === 0 ? (
+        <div className="bg-white rounded-2xl shadow-lg">
+          <div className="text-center py-16">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+            </div>
+            <p className="text-gray-500 text-lg font-medium">Aucun décaissement trouvé</p>
+            <p className="text-gray-400 text-sm mt-2">Essayez de modifier vos critères de recherche</p>
           </div>
-        ) : disbursements.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500">Aucun décaissement trouvé</p>
+        </div>
+      ) : disbursements.length === 0 ? (
+        <div className="bg-white rounded-2xl shadow-lg">
+          <div className="text-center py-16">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+            </div>
+            <p className="text-gray-500 text-lg font-medium">Aucun décaissement trouvé</p>
+            <p className="text-gray-400 text-sm mt-2">Essayez de modifier vos critères de recherche</p>
           </div>
-        ) : (
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -393,7 +472,7 @@ export default function DisbursementsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                            disbursement.status
+                            disbursement.status,
                           )}`}
                         >
                           {getStatusLabel(disbursement.status)}
@@ -439,8 +518,8 @@ export default function DisbursementsPage() {
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Toast Notification */}
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}

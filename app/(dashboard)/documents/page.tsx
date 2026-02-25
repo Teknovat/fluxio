@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Document, DocumentStatus, DocumentType } from "@/types";
+import { Document } from "@/types";
 import Toast from "@/components/Toast";
 import DocumentForm from "@/components/DocumentForm";
 import DocumentCard from "@/components/DocumentCard";
 import PaymentInsights from "@/components/PaymentInsights";
-import FeatureBanner from "@/components/FeatureBanner";
 import Pagination from "@/components/Pagination";
 import { formatAmount } from "@/lib/currency";
 
@@ -138,27 +137,6 @@ export default function DocumentsPage() {
     setCurrentPage(1);
   };
 
-  const getStatusLabel = (status: string): string => {
-    const labels: Record<string, string> = {
-      ALL: "Tous les statuts",
-      UNPAID: "Non payé",
-      PARTIALLY_PAID: "Partiellement payé",
-      PAID: "Payé",
-    };
-    return labels[status] || status;
-  };
-
-  const getTypeLabel = (type: string): string => {
-    const labels: Record<string, string> = {
-      ALL: "Tous les types",
-      INVOICE: "Facture",
-      PAYSLIP: "Bulletin de salaire",
-      PURCHASE_ORDER: "Bon de commande",
-      CONTRACT: "Contrat",
-      OTHER: "Autre",
-    };
-    return labels[type] || type;
-  };
 
   // Calculate summary statistics
   const summary = documents.reduce(
@@ -168,7 +146,7 @@ export default function DocumentsPage() {
       acc.remainingAmount += doc.remainingAmount;
       return acc;
     },
-    { totalAmount: 0, paidAmount: 0, remainingAmount: 0 }
+    { totalAmount: 0, paidAmount: 0, remainingAmount: 0 },
   );
 
   return (
@@ -398,7 +376,7 @@ export default function DocumentsPage() {
                 <DocumentCard
                   key={document.id}
                   document={document}
-                  onView={() => window.open(`/documents/${document.id}`, '_blank')}
+                  onView={() => window.open(`/documents/${document.id}`, "_blank")}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                 />
@@ -479,14 +457,6 @@ export default function DocumentsPage() {
           </div>
         </div>
       )}
-
-      {/* Feature Banner */}
-      <FeatureBanner
-        featureKey="payment_visualization_v1"
-        title="🎉 Nouvelle fonctionnalité !"
-        description="Vous pouvez maintenant voir les détails des paiements directement dans la liste. Cliquez sur 'Détails' pour révéler l'historique des justifications."
-        actionText="Super !"
-      />
     </div>
   );
 }

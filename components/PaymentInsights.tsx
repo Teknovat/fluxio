@@ -16,7 +16,6 @@ export default function PaymentInsights({ documents }: PaymentInsightsProps) {
 
   const totalValue = documents.reduce((sum, doc) => sum + doc.totalAmount, 0);
   const totalPaid = documents.reduce((sum, doc) => sum + doc.paidAmount, 0);
-  const totalRemaining = documents.reduce((sum, doc) => sum + doc.remainingAmount, 0);
 
   const paymentProgress = totalValue > 0 ? (totalPaid / totalValue) * 100 : 0;
 
