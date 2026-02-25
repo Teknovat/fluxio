@@ -5,6 +5,8 @@ import { Document, DocumentStatus, DocumentType } from "@/types";
 import Toast from "@/components/Toast";
 import DocumentForm from "@/components/DocumentForm";
 import DocumentCard from "@/components/DocumentCard";
+import PaymentInsights from "@/components/PaymentInsights";
+import FeatureBanner from "@/components/FeatureBanner";
 import Pagination from "@/components/Pagination";
 import { formatAmount } from "@/lib/currency";
 
@@ -372,6 +374,9 @@ export default function DocumentsPage() {
         </div>
       )}
 
+      {/* Payment Insights */}
+      {documents.length > 0 && <PaymentInsights documents={documents} />}
+
       {/* Documents Grid */}
       <div className="bg-white rounded-lg shadow">
         {isLoading ? (
@@ -388,9 +393,15 @@ export default function DocumentsPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 auto-rows-max">
               {documents.map((document) => (
-                <DocumentCard key={document.id} document={document} onEdit={handleEdit} onDelete={handleDelete} />
+                <DocumentCard
+                  key={document.id}
+                  document={document}
+                  onView={() => window.open(`/documents/${document.id}`, '_blank')}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
               ))}
             </div>
 
@@ -468,6 +479,14 @@ export default function DocumentsPage() {
           </div>
         </div>
       )}
+
+      {/* Feature Banner */}
+      <FeatureBanner
+        featureKey="payment_visualization_v1"
+        title="🎉 Nouvelle fonctionnalité !"
+        description="Vous pouvez maintenant voir les détails des paiements directement dans la liste. Cliquez sur 'Détails' pour révéler l'historique des justifications."
+        actionText="Super !"
+      />
     </div>
   );
 }

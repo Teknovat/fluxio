@@ -1,5 +1,5 @@
 import { Disbursement, DisbursementStatus } from "@/types";
-import { addMoney, subtractMoney, roundToTwoDecimals } from './number-utils';
+import { addMoney, subtractMoney } from './number-utils';
 
 /**
  * Calculate the remaining amount for a disbursement
