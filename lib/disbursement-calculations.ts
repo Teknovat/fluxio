@@ -1,15 +1,24 @@
 import { Disbursement, DisbursementStatus } from "@/types";
+import { addMoney, subtractMoney, roundToTwoDecimals } from './number-utils';
 
 /**
  * Calculate the remaining amount for a disbursement
  * Remaining = Initial - (Total Justified + Total Returned)
+ * Uses proper monetary arithmetic with rounding to prevent floating point errors
  */
 export function calculateDisbursementRemaining(disbursement: Disbursement): number {
-    const totalJustified =
-        disbursement.justifications?.reduce((sum, j) => sum + j.amount, 0) || 0;
-    const totalReturned =
-        disbursement.returns?.reduce((sum, r) => sum + r.amount, 0) || 0;
-    return disbursement.initialAmount - totalJustified - totalReturned;
+    const totalJustified = disbursement.justifications?.reduce(
+        (sum, j) => addMoney(sum, j.amount),
+        0
+    ) || 0;
+
+    const totalReturned = disbursement.returns?.reduce(
+        (sum, r) => addMoney(sum, r.amount),
+        0
+    ) || 0;
+
+    const totalUsed = addMoney(totalJustified, totalReturned);
+    return subtractMoney(disbursement.initialAmount, totalUsed);
 }
 
 /**
