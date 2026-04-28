@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requireAdmin, requireAuth } from '@/lib/auth';
 import { handleAPIError } from '@/lib/api-errors';
 import { createMouvementSchema } from '@/lib/validations';
 import { ZodError } from 'zod';
@@ -15,8 +15,8 @@ export async function PATCH(
     { params }: { params: { id: string } }
 ) {
     try {
-        // Verify admin authentication and get tenant
-        const payload = await requireAdmin(request);
+        // Verify authentication (both ADMIN and USER can edit movements)
+        const payload = await requireAuth(request);
         const tenantId = payload.tenantId;
 
         const { id } = params;

@@ -149,8 +149,8 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
     try {
-        // Verify admin authentication and get tenant
-        const payload = await requireAdmin(request);
+        // Verify authentication (both ADMIN and USER can create movements)
+        const payload = await requireAuth(request);
         const tenantId = payload.tenantId;
 
         // Parse and validate request body

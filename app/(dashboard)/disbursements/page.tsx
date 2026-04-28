@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Disbursement, DisbursementStatus, DisbursementCategory, Intervenant } from "@/types";
 import { formatAmount } from "@/lib/currency";
 import Toast from "@/components/Toast";
@@ -25,6 +26,7 @@ interface DisbursementSummary {
 }
 
 export default function DisbursementsPage() {
+  const router = useRouter();
   const [disbursements, setDisbursements] = useState<DisbursementWithRemaining[]>([]);
   const [summary, setSummary] = useState<DisbursementSummary>({
     totalDisbursed: 0,
@@ -34,8 +36,6 @@ export default function DisbursementsPage() {
   const [intervenants, setIntervenants] = useState<Intervenant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
-
-  // Filter states
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedIntervenant, setSelectedIntervenant] = useState<string>("ALL");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
@@ -49,6 +49,19 @@ export default function DisbursementsPage() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedDisbursement, setSelectedDisbursement] = useState<DisbursementWithRemaining | null>(null);
   const [selectedDisbursementId, setSelectedDisbursementId] = useState<string | null>(null);
+
+  // Redirect USER role away from this page
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        if (user.role === "USER") {
+          router.replace("/dashboard");
+        }
+      } catch {}
+    }
+  }, [router]);
 
   // Fetch data when filters change
   useEffect(() => {
@@ -472,7 +485,7 @@ export default function DisbursementsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                            disbursement.status,
+                            disbursement.status
                           )}`}
                         >
                           {getStatusLabel(disbursement.status)}

@@ -18,6 +18,19 @@ export default function SoldesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
+  // Redirect USER role away from this page
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        if (user.role === "USER") {
+          router.replace("/dashboard");
+        }
+      } catch {}
+    }
+  }, [router]);
+
   // Filter states
   const [selectedType, setSelectedType] = useState<string>("ALL");
   const [dateFrom, setDateFrom] = useState("");

@@ -203,7 +203,8 @@ export default function MouvementsPage() {
     setCurrencyKey((prev) => prev + 1);
   };
 
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
+  const canManageMovements = isAdmin || user?.role === "USER";
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
@@ -254,28 +255,30 @@ export default function MouvementsPage() {
         <h1 className="text-2xl font-bold text-gray-900">Mouvements</h1>
         <div className="flex items-center space-x-3">
           {isAdmin && <CurrencySelector onCurrencyChange={handleCurrencyChange} />}
-          {isAdmin && (
+          {canManageMovements && (
             <>
-              <button
-                onClick={() => setShowDisbursementModal(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
-              >
-                <svg
-                  className="mr-2 h-5 w-5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+              {isAdmin && (
+                <button
+                  onClick={() => setShowDisbursementModal(true)}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-                Ajouter un décaissement
-              </button>
+                  <svg
+                    className="mr-2 h-5 w-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
+                  </svg>
+                  Ajouter un décaissement
+                </button>
+              )}
               <button
                 onClick={() => setShowAddModal(true)}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -399,8 +402,8 @@ export default function MouvementsPage() {
                 {selectedModalities.length === 0
                   ? "Toutes les modalités"
                   : selectedModalities.length === modalityOptions.length
-                  ? "Toutes sélectionnées"
-                  : `${selectedModalities.length} sélectionnée${selectedModalities.length > 1 ? "s" : ""}`}
+                    ? "Toutes sélectionnées"
+                    : `${selectedModalities.length} sélectionnée${selectedModalities.length > 1 ? "s" : ""}`}
               </span>
               <svg
                 className={`w-5 h-5 text-gray-400 transition-transform ${showModalityDropdown ? "rotate-180" : ""}`}
@@ -545,7 +548,7 @@ export default function MouvementsPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Note
                     </th>
-                    {isAdmin && (
+                    {canManageMovements && (
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
@@ -602,7 +605,7 @@ export default function MouvementsPage() {
                         )}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{mouvement.note || "-"}</td>
-                      {isAdmin && (
+                      {canManageMovements && (
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button
                             onClick={() => handleEditMouvement(mouvement)}
@@ -610,12 +613,14 @@ export default function MouvementsPage() {
                           >
                             Modifier
                           </button>
-                          <button
-                            onClick={() => handleDeleteMouvement(mouvement)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            Supprimer
-                          </button>
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleDeleteMouvement(mouvement)}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              Supprimer
+                            </button>
+                          )}
                         </td>
                       )}
                     </tr>
@@ -680,7 +685,7 @@ export default function MouvementsPage() {
                       <span className="font-medium">Note:</span> {mouvement.note}
                     </div>
                   )}
-                  {isAdmin && (
+                  {canManageMovements && (
                     <div className="flex space-x-2 pt-2">
                       <button
                         onClick={() => handleEditMouvement(mouvement)}
@@ -688,12 +693,14 @@ export default function MouvementsPage() {
                       >
                         Modifier
                       </button>
-                      <button
-                        onClick={() => handleDeleteMouvement(mouvement)}
-                        className="flex-1 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100"
-                      >
-                        Supprimer
-                      </button>
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleDeleteMouvement(mouvement)}
+                          className="flex-1 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100"
+                        >
+                          Supprimer
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -720,7 +727,7 @@ export default function MouvementsPage() {
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSuccess={fetchMouvements}
-        isAdmin={isAdmin}
+        isAdmin={canManageMovements}
         onShowToast={showToast}
       />
 
@@ -730,7 +737,7 @@ export default function MouvementsPage() {
         onClose={handleCloseEditModal}
         onSuccess={fetchMouvements}
         editMouvement={editingMouvement}
-        isAdmin={isAdmin}
+        isAdmin={canManageMovements}
         onShowToast={showToast}
       />
 
